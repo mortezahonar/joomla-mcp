@@ -39,7 +39,7 @@ const ApiConfigSchema = z
     const loopbackHttp =
       url.protocol === 'http:' &&
       value.allowInsecureLoopback &&
-      ['127.0.0.1', '::1', 'localhost'].includes(url.hostname);
+      (['127.0.0.1', '::1', 'localhost'].includes(url.hostname) || url.hostname.endsWith('.test'));
 
     if (url.protocol !== 'https:' && !loopbackHttp) {
       context.addIssue({
