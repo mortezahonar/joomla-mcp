@@ -25,6 +25,7 @@ export const writePermissionToolsets = [
   'extensions.admin',
   'configuration.write',
   'maintenance.admin',
+  'djclassifieds.write',
   'core-update',
 ] as const satisfies readonly Toolset[];
 

@@ -6,5 +6,5 @@ namespace VDM\Plugin\Console\JoomlaMcp\Contract;
 
 interface ModelProviderInterface
 {
-    public function administrator(string $component, string $modelName): object;
+    public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object;
 }

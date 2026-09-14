@@ -110,10 +110,12 @@ risk, supported Joomla range, declared ACL, and effective permission for the
 configured actor. Refresh it after package installation/upgrade, Joomla upgrade,
 actor ACL changes, or plugin configuration changes.
 
-The companion 0.7.0 allowlist contains 231 actions:
+The companion 0.7.0 allowlist contains 266 actions:
 
 - 180 list/get/create/update/delete actions for the 36 fixed core entity bases;
 - 28 model-state actions where the fixed Joomla model supports state changes;
+- 35 list/get/create/update/delete and state actions for the 6 fixed
+  DJ-Classifieds entity bases;
 - 23 supplemental/alias actions for system/safe configuration, extensions,
   cache, scheduler, site state, sessions, and core-update status.
 

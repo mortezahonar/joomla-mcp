@@ -40,12 +40,14 @@ not mean arbitrary stock CLI execution.
   Special writes contain 22 exact body/no-body contracts, one typed core plus
   runtime-extension contract for contact submission, and four source-gated
   generic contracts.
-- The companion allowlist contains 231 fixed native actions: 180 CRUD, 28 core
-  model state actions, and 23 supplemental/alias actions.
-- The edge companion catalogue contains 12 reads and 39 writes (51 descriptors):
-  selected native operations, cache clean, and 28 core model-state actions.
+- The companion allowlist contains 266 fixed native actions: 180 core CRUD, 28
+  core model state actions, 35 DJ-Classifieds operations, and 23
+  supplemental/alias actions.
+- The edge companion catalogue contains 24 reads and 44 writes (68 descriptors):
+  selected native operations, cache clean, 28 core model-state actions, 12
+  DJ-Classifieds reads, and 5 DJ-Classifieds model-state actions.
 - Generic MCP search/read and plan/apply expose the effective API actions, all
-  shared companion CRUD IDs, all 51 edge companion descriptors, and the
+  shared companion CRUD IDs, all 68 edge companion descriptors, and the
   companion's live effective actor permission catalogue. `joomla_action_describe`
   reports exact configured transports and source-only reasons.
 - Offline TypeScript and companion tests exist. The current live API contract is

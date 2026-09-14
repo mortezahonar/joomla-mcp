@@ -231,7 +231,7 @@ test('companion self-test validates the full catalogue and fixed dispatch', stat
     $result = (new SelfTestService($registry, $allow))->evaluate();
     expect($result['ok'] === true, 'Companion self-test did not pass.');
     expect($result['checks']['pluginEnabled'] === true, 'Companion self-test did not prove plugin activation.');
-    expect($result['checks']['catalogue']['actionCount'] === 231, 'Companion self-test catalogue count changed.');
+    expect($result['checks']['catalogue']['actionCount'] === 266, 'Companion self-test catalogue count changed.');
     expect($result['checks']['dispatch']['action'] === 'system.info', 'Companion self-test did not use the fixed safe action.');
 });
 
@@ -245,7 +245,7 @@ test('Joomla factory registers the reviewed native model catalogue', static func
     $registry = (new JoomlaActionRegistryFactory(new stdClass()))->create();
     $names = array_map(static fn (ActionInterface $action): string => $action->descriptor()->name, $registry->all());
     expect(count($names) === count(array_unique($names)), 'Native action names are not unique.');
-    expect(count($names) === 231, 'The reviewed 231-action native capability catalogue changed.');
+    expect(count($names) === 266, 'The reviewed 266-action native capability catalogue changed.');
 
     foreach ([
         'configuration.application.get',
@@ -387,7 +387,7 @@ test('generic list action bounds model state and strips non-allowlisted output',
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             expect($component === 'com_users' && $modelName === 'Users', 'Unexpected model selection.');
 
@@ -435,7 +435,7 @@ test('generic writes preview by default and require the signed edge marker to ap
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             return $this->model;
         }
@@ -497,7 +497,7 @@ test('module writes derive Joomla assignment mode from assigned menu ids', stati
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             return $this->model;
         }
@@ -559,7 +559,7 @@ test('generic updates merge existing writable fields without replaying sensitive
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             return $this->model;
         }
@@ -595,7 +595,7 @@ test('generic model failures retain one bounded actionable Joomla reason', stati
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             return $this->model;
         }
@@ -620,7 +620,7 @@ test('generic writes reject unknown fields and CLI etags before model invocation
     $provider = new class implements ModelProviderInterface {
         public int $calls = 0;
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             $this->calls++;
 
@@ -676,7 +676,7 @@ test('generic delete and state operations use only bounded numeric ids', static 
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             return $this->model;
         }
@@ -705,7 +705,7 @@ test('expired cache purge is preview-first and delegates only to Joomla CacheMod
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             expect($component === 'com_cache' && $modelName === 'Cache', 'Cache purge selected an unexpected Joomla model.');
 
@@ -768,7 +768,7 @@ test('extension metadata refreshes use the native Joomla discover and stable upd
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             expect($component === 'com_installer', 'Refresh escaped com_installer.');
 
@@ -825,7 +825,7 @@ test('fixed extension state adapter reads, applies, verifies, and provides inver
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             expect($component === 'com_installer' && $modelName === 'Manage', 'State adapter selected an unexpected model.');
 
@@ -900,7 +900,7 @@ test('scheduler mutations are single-task, preview-first, and return pre/post st
         {
         }
 
-        public function administrator(string $component, string $modelName): object
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
         {
             expect($component === 'com_scheduler' && $modelName === 'Task', 'Scheduler selected an unexpected model.');
 
@@ -953,7 +953,7 @@ test('all reversible native state setters fail closed on mismatched read-back', 
     };
     $coreProvider = new class ($coreModel) implements ModelProviderInterface {
         public function __construct(private object $model) {}
-        public function administrator(string $component, string $modelName): object { return $this->model; }
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object { return $this->model; }
     };
     $article = array_values(array_filter(
         CoreEntityCatalogue::all(),
@@ -973,7 +973,7 @@ test('all reversible native state setters fail closed on mismatched read-back', 
     };
     $fixedProvider = new class ($fixedModel) implements ModelProviderInterface {
         public function __construct(private object $model) {}
-        public function administrator(string $component, string $modelName): object { return $this->model; }
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object { return $this->model; }
     };
     $fixed = new FixedModelStateAction(
         'extensions.state.set', 'test', 'com_installer', 'Manage', 'extension_id',
@@ -1004,7 +1004,7 @@ test('all reversible native state setters fail closed on mismatched read-back', 
     };
     $taskProvider = new class ($taskModel) implements ModelProviderInterface {
         public function __construct(private object $model) {}
-        public function administrator(string $component, string $modelName): object { return $this->model; }
+        public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object { return $this->model; }
     };
     $expectPostconditionFailure(
         static fn () => (new SchedulerTaskAction('state', $taskProvider, $nativeMismatch))->execute([

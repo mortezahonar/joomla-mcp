@@ -31,6 +31,7 @@ final readonly class CoreEntityDefinition
         public array $sensitiveFields = [],
         public string $primaryKey = 'id',
         public string $stateField = 'published',
+        public ?string $legacyModelPrefix = null,
     ) {
         if (!preg_match('/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/', $id)) {
             throw new InvalidArgumentException(sprintf('Invalid core entity id "%s".', $id));
@@ -50,6 +51,10 @@ final readonly class CoreEntityDefinition
 
         if (!preg_match('/^[a-z][a-z0-9_]*$/', $primaryKey)) {
             throw new InvalidArgumentException(sprintf('Entity "%s" has an invalid primary key.', $id));
+        }
+
+        if ($legacyModelPrefix !== null && !preg_match('/^[A-Za-z][A-Za-z0-9_]*$/', $legacyModelPrefix)) {
+            throw new InvalidArgumentException(sprintf('Entity "%s" has an invalid legacy model prefix.', $id));
         }
 
         if ($supportsState && !in_array($stateField, $readFields, true)) {

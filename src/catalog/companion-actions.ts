@@ -127,6 +127,36 @@ const sessionGcInputSchema: JsonSchema = Object.freeze({
   additionalProperties: false,
 });
 
+const djclassifiedsListInputSchema: JsonSchema = Object.freeze({
+  type: 'object',
+  properties: Object.freeze({
+    offset: Object.freeze({ type: 'integer', minimum: 0, maximum: 1_000_000, default: 0 }),
+    limit: Object.freeze({ type: 'integer', minimum: 1, maximum: 100, default: 20 }),
+    search: Object.freeze({ type: 'string', maxLength: 200 }),
+    state: Object.freeze({ type: 'integer', minimum: -2, maximum: 2 }),
+  }),
+  additionalProperties: false,
+});
+
+const djclassifiedsGetInputSchema: JsonSchema = Object.freeze({
+  type: 'object',
+  properties: Object.freeze({
+    id: Object.freeze({ type: 'integer', minimum: 1 }),
+  }),
+  required: Object.freeze(['id']),
+  additionalProperties: false,
+});
+
+const djclassifiedsStateInputSchema: JsonSchema = Object.freeze({
+  type: 'object',
+  properties: Object.freeze({
+    id: Object.freeze({ type: 'integer', minimum: 1 }),
+    state: Object.freeze({ type: 'integer', enum: Object.freeze([-2, 0, 1, 2]) }),
+  }),
+  required: Object.freeze(['id', 'state']),
+  additionalProperties: false,
+});
+
 const fixedReadActions: readonly CompanionActionDescriptor[] = Object.freeze([
   read('system.info', 'System information', 'Return non-secret Joomla and PHP runtime versions.', 'system', 'discovery', emptyInputSchema, {
     kind: 'joomla-runtime', method: 'JVERSION and PHP_VERSION',
@@ -166,6 +196,54 @@ const fixedReadActions: readonly CompanionActionDescriptor[] = Object.freeze([
   }),
 ]);
 
+interface DjClassifiedsEntity {
+  readonly id: string;
+  readonly label: string;
+  readonly listModel: string;
+  readonly itemModel: string;
+  readonly supportsState: boolean;
+}
+
+const djClassifiedsEntities: readonly DjClassifiedsEntity[] = Object.freeze([
+  { id: 'djclassifieds.items', label: 'DJ-Classifieds items', listModel: 'Items', itemModel: 'Item', supportsState: true },
+  { id: 'djclassifieds.categories', label: 'DJ-Classifieds categories', listModel: 'Categories', itemModel: 'Category', supportsState: true },
+  { id: 'djclassifieds.profiles', label: 'DJ-Classifieds user profiles', listModel: 'Profiles', itemModel: 'Profile', supportsState: false },
+  { id: 'djclassifieds.regions', label: 'DJ-Classifieds regions', listModel: 'Regions', itemModel: 'Region', supportsState: true },
+  { id: 'djclassifieds.plans', label: 'DJ-Classifieds plans', listModel: 'Plans', itemModel: 'Plan', supportsState: true },
+  { id: 'djclassifieds.types', label: 'DJ-Classifieds item types', listModel: 'Types', itemModel: 'Type', supportsState: true },
+]);
+
+const djClassifiedsReadActions: readonly CompanionActionDescriptor[] = Object.freeze(
+  djClassifiedsEntities.flatMap((entity) => [
+    read(`${entity.id}.list`, `List ${entity.label}`, `List ${entity.label} through DJ-Classifieds administrator models.`, 'djclassifieds', 'djclassifieds.read', djclassifiedsListInputSchema, {
+      kind: 'administrator-model', component: 'com_djclassifieds', model: entity.listModel, method: 'getItems',
+    }),
+    read(`${entity.id}.get`, `Get ${entity.label}`, `Get one ${entity.label.toLocaleLowerCase('en')} through DJ-Classifieds administrator models.`, 'djclassifieds', 'djclassifieds.read', djclassifiedsGetInputSchema, {
+      kind: 'administrator-model', component: 'com_djclassifieds', model: entity.itemModel, method: 'getItem',
+    }),
+  ]),
+);
+
+const djClassifiedsStateActions: readonly CompanionActionDescriptor[] = Object.freeze(
+  djClassifiedsEntities
+    .filter((entity) => entity.supportsState)
+    .map((entity) => Object.freeze({
+      id: `${entity.id}.state`,
+      title: `Change ${entity.label} state`,
+      description: `Change one ${entity.label.toLocaleLowerCase('en')} state through DJ-Classifieds administrator models.`,
+      domain: 'djclassifieds',
+      risk: 'write' as const,
+      toolset: 'djclassifieds.write' as const,
+      inputSchema: djclassifiedsStateInputSchema,
+      native: Object.freeze({
+        kind: 'administrator-model' as const,
+        component: 'com_djclassifieds' as const,
+        model: entity.itemModel,
+        method: 'publish',
+      }),
+    })),
+);
+
 const stateUnsupported = new Set([
   'menus.site',
   'menus.administrator',
@@ -196,7 +274,10 @@ export const companionStateActions: readonly CompanionActionDescriptor[] = Objec
     })),
 );
 
-export const companionReadActions: readonly CompanionActionDescriptor[] = fixedReadActions;
+export const companionReadActions: readonly CompanionActionDescriptor[] = Object.freeze([
+  ...fixedReadActions,
+  ...djClassifiedsReadActions,
+]);
 
 export const companionWriteActions: readonly CompanionActionDescriptor[] = Object.freeze([
   Object.freeze({
@@ -245,6 +326,7 @@ export const companionWriteActions: readonly CompanionActionDescriptor[] = Objec
     kind: 'console-command', component: 'com_config', method: 'session:metadata:gc',
   }),
   ...companionStateActions,
+  ...djClassifiedsStateActions,
 ]);
 
 export const companionActions: readonly CompanionActionDescriptor[] = Object.freeze([
@@ -289,6 +371,20 @@ export function normalizeCompanionReadInput(actionId: string, value: unknown): R
   if (actionId === 'content.articles.get') {
     rejectUnknown(input, ['id']);
     return Object.freeze({ id: boundedInteger(input['id'], 'id', 1, 2_147_483_647) });
+  }
+  if (actionId.startsWith('djclassifieds.') && actionId.endsWith('.get')) {
+    rejectUnknown(input, ['id']);
+    return Object.freeze({ id: boundedInteger(input['id'], 'id', 1, 2_147_483_647) });
+  }
+  if (actionId.startsWith('djclassifieds.') && actionId.endsWith('.list')) {
+    rejectUnknown(input, ['offset', 'limit', 'search', 'state']);
+    const normalized: Record<string, unknown> = {
+      offset: optionalInteger(input['offset'], 'offset', 0, 1_000_000, 0),
+      limit: optionalInteger(input['limit'], 'limit', 1, 100, 20),
+    };
+    if (input['search'] !== undefined) normalized['search'] = boundedText(input['search'], 'search', 200);
+    if (input['state'] !== undefined) normalized['state'] = boundedInteger(input['state'], 'state', -2, 2);
+    return Object.freeze(normalized);
   }
 
   const allowed = actionId === 'content.articles.list'

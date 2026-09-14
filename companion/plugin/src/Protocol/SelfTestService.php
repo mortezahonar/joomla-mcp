@@ -11,7 +11,7 @@ use VDM\Plugin\Console\JoomlaMcp\Domain\ActionRegistry;
 
 final readonly class SelfTestService
 {
-    private const MINIMUM_ACTIONS = 231;
+    private const MINIMUM_ACTIONS = 266;
 
     public function __construct(
         private ActionRegistry $registry,

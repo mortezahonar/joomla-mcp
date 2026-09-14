@@ -14,7 +14,7 @@ final readonly class JoomlaModelProvider implements ModelProviderInterface
     {
     }
 
-    public function administrator(string $component, string $modelName): object
+    public function administrator(string $component, string $modelName, ?string $legacyModelPrefix = null): object
     {
         if (!method_exists($this->application, 'bootComponent')) {
             throw new ActionException('JOOMLA_RUNTIME_UNAVAILABLE', 'The Joomla component runtime is unavailable.');
@@ -32,10 +32,16 @@ final readonly class JoomlaModelProvider implements ModelProviderInterface
             throw new ActionException('COMPONENT_UNAVAILABLE', sprintf('Component "%s" is unavailable.', $component));
         }
 
+        $prefix = $legacyModelPrefix ?? 'Administrator';
+
+        if ($legacyModelPrefix !== null) {
+            $this->registerLegacyComponentPaths($legacyModelPrefix, $component);
+        }
+
         try {
             $model = $componentInstance->getMVCFactory()->createModel(
                 $modelName,
-                'Administrator',
+                $prefix,
                 ['ignore_request' => true],
             );
         } catch (Throwable) {
@@ -47,6 +53,24 @@ final readonly class JoomlaModelProvider implements ModelProviderInterface
         }
 
         return $model;
+    }
+
+    private function registerLegacyComponentPaths(string $legacyModelPrefix, string $component): void
+    {
+        if (!defined('JPATH_COMPONENT_ADMINISTRATOR')) {
+            return;
+        }
+
+        \Joomla\CMS\MVC\Model\BaseDatabaseModel::addIncludePath(
+            JPATH_COMPONENT_ADMINISTRATOR . '/models',
+            $legacyModelPrefix,
+        );
+
+        foreach ([JPATH_COMPONENT_ADMINISTRATOR . '/loader.php', JPATH_COMPONENT_ADMINISTRATOR . '/model.php'] as $legacyBootstrap) {
+            if (is_file($legacyBootstrap)) {
+                require_once $legacyBootstrap;
+            }
+        }
     }
 
     private function defineComponentPaths(string $component): void

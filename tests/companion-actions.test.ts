@@ -13,10 +13,10 @@ import {
 
 describe('Joomla-native companion action catalogue', () => {
   it('contains only fixed, unique, native capability descriptors', () => {
-    expect(companionReadActions).toHaveLength(12);
+    expect(companionReadActions).toHaveLength(24);
     expect(companionStateActions).toHaveLength(28);
-    expect(companionWriteActions).toHaveLength(39);
-    expect(companionActions).toHaveLength(51);
+    expect(companionWriteActions).toHaveLength(44);
+    expect(companionActions).toHaveLength(68);
     expect(new Set(companionActions.map((action) => action.id)).size).toBe(companionActions.length);
 
     for (const action of companionActions) {
@@ -37,6 +37,10 @@ describe('Joomla-native companion action catalogue', () => {
     expect(getCompanionWriteAction('scheduler.tasks.run')).toMatchObject({ toolset: 'maintenance.admin', risk: 'high' });
     expect(getCompanionWriteAction('extensions.state.set')).toMatchObject({ toolset: 'extensions.admin', risk: 'high' });
     expect(getCompanionWriteAction('users.users.state')).toBeUndefined();
+    expect(getCompanionReadAction('djclassifieds.regions.list')?.toolset).toBe('djclassifieds.read');
+    expect(getCompanionReadAction('djclassifieds.profiles.get')?.toolset).toBe('djclassifieds.read');
+    expect(getCompanionWriteAction('djclassifieds.items.state')).toMatchObject({ toolset: 'djclassifieds.write', risk: 'write' });
+    expect(getCompanionWriteAction('djclassifieds.profiles.state')).toBeUndefined();
   });
 
   it('normalizes bounded read inputs and rejects escape fields', () => {
@@ -45,10 +49,17 @@ describe('Joomla-native companion action catalogue', () => {
     expect(normalizeCompanionReadInput('scheduler.tasks.list', { offset: 20, limit: 5, search: 'daily' }))
       .toEqual({ offset: 20, limit: 5, search: 'daily' });
     expect(normalizeCompanionReadInput('content.articles.get', { id: 7 })).toEqual({ id: 7 });
+    expect(normalizeCompanionReadInput('djclassifieds.items.list', { offset: 10, limit: 5, search: 'demo', state: 1 }))
+      .toEqual({ offset: 10, limit: 5, search: 'demo', state: 1 });
+    expect(normalizeCompanionReadInput('djclassifieds.items.list', {}))
+      .toEqual({ offset: 0, limit: 20 });
+    expect(normalizeCompanionReadInput('djclassifieds.profiles.get', { id: 42 })).toEqual({ id: 42 });
 
     expect(() => normalizeCompanionReadInput('cache.groups.list', { component: 'com_users' })).toThrow('Unsupported');
     expect(() => normalizeCompanionReadInput('cache.groups.list', { limit: 101 })).toThrow('between 1 and 100');
     expect(() => normalizeCompanionReadInput('content.articles.get', { id: '../configuration.php' })).toThrow('integer');
+    expect(() => normalizeCompanionReadInput('djclassifieds.items.list', { limit: 101 })).toThrow('between 1 and 100');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.categories.state', { id: 1, state: 3 })).toThrow('between -2 and 2');
     expect(() => normalizeCompanionReadInput('shell.run', {})).toThrow('Unknown');
   });
 
@@ -63,6 +74,7 @@ describe('Joomla-native companion action catalogue', () => {
     expect(normalizeCompanionWriteInput('scheduler.tasks.state.set', { id: 7, state: -2 }))
       .toEqual({ id: 7, state: -2 });
     expect(normalizeCompanionWriteInput('scheduler.tasks.run', { id: 7 })).toEqual({ id: 7 });
+    expect(normalizeCompanionWriteInput('djclassifieds.items.state', { id: 3, state: 1 })).toEqual({ id: 3, state: 1 });
     expect(normalizeCompanionWriteInput('site.state.set', { offline: true })).toEqual({ offline: true });
     expect(normalizeCompanionWriteInput('sessions.data.gc', {})).toEqual({ application: 'site' });
 

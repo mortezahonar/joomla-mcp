@@ -369,7 +369,11 @@ final readonly class CoreEntityAction implements ActionInterface
     /** @param list<string> $methods */
     private function model(string $name, array $methods): object
     {
-        $model = $this->models->administrator($this->entity->component, $name);
+        $model = $this->models->administrator(
+            $this->entity->component,
+            $name,
+            $this->entity->legacyModelPrefix,
+        );
 
         foreach ($methods as $method) {
             if (!method_exists($model, $method)) {

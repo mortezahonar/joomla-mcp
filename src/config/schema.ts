@@ -16,6 +16,8 @@ export const ToolsetSchema = z.enum([
   'configuration.write',
   'maintenance.read',
   'maintenance.admin',
+  'djclassifieds.read',
+  'djclassifieds.write',
   'core-update',
   'cli.discovery',
 ]);

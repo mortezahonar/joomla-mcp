@@ -19,6 +19,7 @@ use VDM\Plugin\Console\JoomlaMcp\Action\SessionGarbageCollectionAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\SiteStateAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\SystemInfoAction;
 use VDM\Plugin\Console\JoomlaMcp\Domain\ActionRegistry;
+use VDM\Plugin\Console\JoomlaMcp\Joomla\DjClassifiedsCatalogue;
 
 final readonly class JoomlaActionRegistryFactory
 {
@@ -120,6 +121,16 @@ final readonly class JoomlaActionRegistryFactory
         ];
 
         foreach (CoreEntityCatalogue::all() as $entity) {
+            foreach (['list', 'get', 'create', 'update', 'delete'] as $operation) {
+                $actions[] = new CoreEntityAction($entity, $operation, $models);
+            }
+
+            if ($entity->supportsState) {
+                $actions[] = new CoreEntityAction($entity, 'state', $models);
+            }
+        }
+
+        foreach (DjClassifiedsCatalogue::all() as $entity) {
             foreach (['list', 'get', 'create', 'update', 'delete'] as $operation) {
                 $actions[] = new CoreEntityAction($entity, $operation, $models);
             }
