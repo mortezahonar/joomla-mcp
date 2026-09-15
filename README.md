@@ -27,6 +27,7 @@ TypeScript is a Tier 1 MCP SDK while PHP is Tier 3. For convenience, TypeScript 
 - Reviewed field allowlists for every CRUD mutation family and exact schemas for fixed-shape media, privacy, plugin, language-override, application-configuration, and Joomla Update mutations.
 - Explicit source-only gates for routes that are defective in Joomla 6.1 or require unimplemented runtime secret/schema discovery.
 - Joomla-native local actions through a fixed companion allowlist.
+- Optional live DJ-Classifieds reference resource (`joomla://catalog/djclassifieds/{site}`) exposing tables, columns, relations, models, views, and plugins, gated by the central `features.djclassifiedsReferenceResource` configuration switch.
 - Read-only discovery, safe configuration filtering, and immutable multi-site aliases.
 - Guarded writes using explicit principal-bound operator grants (`once`, `30-minutes`, or `indefinite`), preview, signed one-time plans, idempotency, locks, audit events, and verification where supported.
 - MCP over stdio or authenticated Streamable HTTP.

@@ -1,4 +1,4 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { z } from 'zod/v4';
 
@@ -97,6 +97,60 @@ export function createServer(
       contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(publicCatalog()) }],
     }),
   );
+
+  // The live DJ-Classifieds reference resource is controlled by the central
+  // configuration feature switch; it is not registered until an operator
+  // enables features.djclassifiedsReferenceResource.
+  const reference = configuration.features?.djclassifiedsReferenceResource;
+
+  if (reference?.enabled === true) {
+    const template = new ResourceTemplate('joomla://catalog/djclassifieds/{site}', {
+      list: () => ({
+        resources: [...configuration.sites.keys()].map((site) => ({
+          uri: `joomla://catalog/djclassifieds/${site}`,
+          name: `DJ-Classifieds reference: ${site}`,
+          mimeType: 'application/json',
+          description: 'Live DJ-Classifieds installation reference for the configured site.',
+        })),
+      }),
+    });
+
+    server.registerResource(
+      'joomla-djclassifieds-reference',
+      template,
+      {
+        title: 'DJ-Classifieds live installation reference',
+        description:
+          'Live machine-readable DJ-Classifieds reference: tables, columns, relations, models, views, and plugins for one configured site.',
+        mimeType: 'application/json',
+      },
+      async (uri, variables) => {
+        const site = referenceSiteAlias(variables.site);
+
+        if (site === undefined || !configuration.sites.has(site)) {
+          throw new Error('The DJ-Classifieds reference resource requires a configured site alias.');
+        }
+
+        const envelope = await service.dispatchCompanionRead({
+          site,
+          action: 'djclassifieds.inspect',
+          input: {
+            maxTables: reference.maxTables,
+            maxColumns: reference.maxColumns,
+            maxSampleRows: reference.maxSampleRows,
+          },
+        });
+
+        return {
+          contents: [{
+            uri: uri.href,
+            mimeType: 'application/json',
+            text: JSON.stringify(envelope, null, 2),
+          }],
+        };
+      },
+    );
+  }
 
   server.registerTool(
     'joomla_sites_list',
@@ -632,6 +686,14 @@ function approvalPrincipal(authInfo: AuthInfo | undefined, localPrincipal: strin
   const subject = typeof authInfo.extra?.['subject'] === 'string' ? authInfo.extra['subject'] : '';
   const issuer = typeof authInfo.extra?.['issuer'] === 'string' ? authInfo.extra['issuer'] : '';
   return `remote:${issuer}:${subject}:${authInfo.clientId}`;
+}
+
+function referenceSiteAlias(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const match = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/.exec(value);
+  return match?.[0];
 }
 
 function normalizeLocalPrincipal(value: string): string {

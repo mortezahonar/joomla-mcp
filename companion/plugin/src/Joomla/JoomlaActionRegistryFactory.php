@@ -6,6 +6,7 @@ namespace VDM\Plugin\Console\JoomlaMcp\Joomla;
 
 use VDM\Plugin\Console\JoomlaMcp\Action\CoreEntityAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\CoreUpdateStatusAction;
+use VDM\Plugin\Console\JoomlaMcp\Action\DjClassifiedsInspectAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\CleanCacheAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\FixedModelListAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\FixedModelStateAction;
@@ -118,6 +119,7 @@ final readonly class JoomlaActionRegistryFactory
             new SessionGarbageCollectionAction($native),
             new SessionGarbageCollectionAction($native, true),
             new CoreUpdateStatusAction($models),
+            new DjClassifiedsInspectAction($this->application),
         ];
 
         foreach (CoreEntityCatalogue::all() as $entity) {

@@ -13,10 +13,10 @@ import {
 
 describe('Joomla-native companion action catalogue', () => {
   it('contains only fixed, unique, native capability descriptors', () => {
-    expect(companionReadActions).toHaveLength(24);
+    expect(companionReadActions).toHaveLength(25);
     expect(companionStateActions).toHaveLength(28);
-    expect(companionWriteActions).toHaveLength(44);
-    expect(companionActions).toHaveLength(68);
+    expect(companionWriteActions).toHaveLength(62);
+    expect(companionActions).toHaveLength(87);
     expect(new Set(companionActions.map((action) => action.id)).size).toBe(companionActions.length);
 
     for (const action of companionActions) {
@@ -39,8 +39,15 @@ describe('Joomla-native companion action catalogue', () => {
     expect(getCompanionWriteAction('users.users.state')).toBeUndefined();
     expect(getCompanionReadAction('djclassifieds.regions.list')?.toolset).toBe('djclassifieds.read');
     expect(getCompanionReadAction('djclassifieds.profiles.get')?.toolset).toBe('djclassifieds.read');
+    expect(getCompanionReadAction('djclassifieds.inspect')?.toolset).toBe('djclassifieds.read');
     expect(getCompanionWriteAction('djclassifieds.items.state')).toMatchObject({ toolset: 'djclassifieds.write', risk: 'write' });
     expect(getCompanionWriteAction('djclassifieds.profiles.state')).toBeUndefined();
+    expect(getCompanionWriteAction('djclassifieds.categories.create')).toMatchObject({ toolset: 'djclassifieds.write', risk: 'write' });
+    expect(getCompanionWriteAction('djclassifieds.items.update')).toMatchObject({ toolset: 'djclassifieds.write', risk: 'write' });
+    expect(getCompanionWriteAction('djclassifieds.regions.delete')).toMatchObject({ toolset: 'djclassifieds.write', risk: 'high' });
+    expect(getCompanionWriteAction('djclassifieds.profiles.create')).toMatchObject({ toolset: 'djclassifieds.write' });
+    expect(getCompanionWriteAction('djclassifieds.plans.delete')).toBeDefined();
+    expect(getCompanionWriteAction('djclassifieds.types.update')).toBeDefined();
   });
 
   it('normalizes bounded read inputs and rejects escape fields', () => {
@@ -54,6 +61,14 @@ describe('Joomla-native companion action catalogue', () => {
     expect(normalizeCompanionReadInput('djclassifieds.items.list', {}))
       .toEqual({ offset: 0, limit: 20 });
     expect(normalizeCompanionReadInput('djclassifieds.profiles.get', { id: 42 })).toEqual({ id: 42 });
+    expect(normalizeCompanionReadInput('djclassifieds.inspect', {})).toEqual({});
+    expect(normalizeCompanionReadInput('djclassifieds.inspect', { sampleRows: true })).toEqual({ sampleRows: true });
+    expect(normalizeCompanionReadInput('djclassifieds.inspect', { maxTables: 53, maxColumns: 120, maxSampleRows: 5 }))
+      .toEqual({ maxTables: 53, maxColumns: 120, maxSampleRows: 5 });
+    expect(() => normalizeCompanionReadInput('djclassifieds.inspect', { sampleRows: 'yes' })).toThrow('must be a boolean');
+    expect(() => normalizeCompanionReadInput('djclassifieds.inspect', { maxTables: 0 })).toThrow('between 1 and 1000');
+    expect(() => normalizeCompanionReadInput('djclassifieds.inspect', { maxSampleRows: 51 })).toThrow('between 1 and 50');
+    expect(() => normalizeCompanionReadInput('djclassifieds.inspect', { extra: 1 })).toThrow('Unsupported');
 
     expect(() => normalizeCompanionReadInput('cache.groups.list', { component: 'com_users' })).toThrow('Unsupported');
     expect(() => normalizeCompanionReadInput('cache.groups.list', { limit: 101 })).toThrow('between 1 and 100');
@@ -77,6 +92,13 @@ describe('Joomla-native companion action catalogue', () => {
     expect(normalizeCompanionWriteInput('djclassifieds.items.state', { id: 3, state: 1 })).toEqual({ id: 3, state: 1 });
     expect(normalizeCompanionWriteInput('site.state.set', { offline: true })).toEqual({ offline: true });
     expect(normalizeCompanionWriteInput('sessions.data.gc', {})).toEqual({ application: 'site' });
+    expect(normalizeCompanionWriteInput('djclassifieds.categories.create', { data: { name: 'فروشگاهی', parent_id: 1, published: 1 } }))
+      .toEqual({ data: { name: 'فروشگاهی', parent_id: 1, published: 1 } });
+    expect(normalizeCompanionWriteInput('djclassifieds.categories.create', { data: { alias: 'shops' } }))
+      .toEqual({ data: { alias: 'shops' } });
+    expect(normalizeCompanionWriteInput('djclassifieds.items.update', { id: 3, data: { price: 1_200_000, region_id: 21 } }))
+      .toEqual({ id: 3, data: { price: 1_200_000, region_id: 21 } });
+    expect(normalizeCompanionWriteInput('djclassifieds.regions.delete', { id: 22 })).toEqual({ id: 22 });
 
     expect(() => normalizeCompanionWriteInput('cache.clean', { groups: ['../system'] })).toThrow('safe name');
     expect(() => normalizeCompanionWriteInput('cache.clean', { groups: ['same', 'same'] })).toThrow('unique');
@@ -87,5 +109,14 @@ describe('Joomla-native companion action catalogue', () => {
     expect(() => normalizeCompanionWriteInput('scheduler.tasks.run', { id: 2, all: true })).toThrow('Unsupported');
     expect(() => normalizeCompanionWriteInput('sessions.data.gc', { application: 'api' })).toThrow('site or administrator');
     expect(() => normalizeCompanionWriteInput('database.import', {})).toThrow('Unknown');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.categories.create', { data: { bogus: 1 } })).toThrow('Unsupported');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.create', { data: {} })).toThrow('at least one');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.create', {})).toThrow('must be an object');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.update', { data: { name: 'test' } })).toThrow('integer');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.update', { id: 1, data: { user_id: 301 } })).toThrow('Unsupported');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.delete', { id: 1, data: { name: 'x' } })).toThrow('Unsupported');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.create', { data: { name: 'x' }, extra: 1 })).toThrow('Unsupported');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.items.create', { data: { name: 'x\0y' } })).toThrow('invalid string');
+    expect(() => normalizeCompanionWriteInput('djclassifieds.types.delete', { id: 0 })).toThrow('between 1');
   });
 });

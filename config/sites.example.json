@@ -22,6 +22,14 @@
     "jwksUrl": "https://identity.example.test/.well-known/jwks.json",
     "resourceMetadataUrl": "https://mcp.example.test/.well-known/oauth-protected-resource"
   },
+  "features": {
+    "djclassifiedsReferenceResource": {
+      "enabled": false,
+      "maxTables": 200,
+      "maxColumns": 200,
+      "maxSampleRows": 5
+    }
+  },
   "sites": {
     "production": {
       "toolsets": ["discovery", "content.read", "content.write", "structure.read", "extensions.read", "configuration.read", "maintenance.read"],

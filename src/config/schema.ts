@@ -165,11 +165,28 @@ const HttpConfigSchema = z
     }
   });
 
+const DjClassifiedsReferenceResourceSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    maxTables: z.int().min(1).max(1_000).default(200),
+    maxColumns: z.int().min(1).max(1_000).default(200),
+    maxSampleRows: z.int().min(1).max(50).default(5),
+  })
+  .strict()
+  .default(() => ({ enabled: false, maxTables: 200, maxColumns: 200, maxSampleRows: 5 }));
+
+const FeaturesSchema = z
+  .object({
+    djclassifiedsReferenceResource: DjClassifiedsReferenceResourceSchema,
+  })
+  .strict();
+
 export const RawConfigurationSchema = z
   .object({
     defaultSite: z.string().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/),
     approval: ApprovalConfigSchema.optional(),
     http: HttpConfigSchema.optional(),
+    features: FeaturesSchema.optional(),
     sites: z.record(z.string().regex(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/), SiteSchema),
   })
   .strict()
@@ -215,4 +232,12 @@ export interface Configuration {
     readonly allowIndefinite?: boolean;
   };
   readonly http?: z.infer<typeof HttpConfigSchema>;
+  readonly features?: {
+    readonly djclassifiedsReferenceResource: {
+      readonly enabled: boolean;
+      readonly maxTables: number;
+      readonly maxColumns: number;
+      readonly maxSampleRows: number;
+    };
+  };
 }

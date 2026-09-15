@@ -139,6 +139,7 @@ export async function resolveConfiguration(
           },
         }),
     ...(parsed.data.http === undefined ? {} : { http: parsed.data.http }),
+    ...(parsed.data.features === undefined ? {} : { features: parsed.data.features }),
   };
 }
 

@@ -89,4 +89,68 @@ describe('MCP server', () => {
       await server.close();
     }
   });
+
+  it('publishes the DJ-Classifieds reference resource only when the central feature switch is enabled', async () => {
+    const base = (): Configuration => ({
+      defaultSite: 'test',
+      sites: new Map([
+        [
+          'test',
+          {
+            id: 'test',
+            toolsets: new Set(['discovery', 'content.read', 'djclassifieds.read']),
+            api: {
+              baseUrl: 'https://example.test',
+              tokenEnv: 'TOKEN',
+              token: 'secret',
+              timeoutMs: 30_000,
+              maxResponseBytes: 1_000_000,
+              maxPageSize: 100,
+            },
+            cli: {
+              root: '/tmp',
+              phpBinary: process.execPath,
+              timeoutMs: 30_000,
+              maxOutputBytes: 1_000_000,
+            },
+          },
+        ],
+      ]),
+    });
+
+    const disabledServer = createServer(base());
+    const disabledClient = new Client({ name: 'test-client', version: '1.0.0' });
+    const [disabledClientTransport, disabledServerTransport] = InMemoryTransport.createLinkedPair();
+    await disabledServer.connect(disabledServerTransport);
+    await disabledClient.connect(disabledClientTransport);
+
+    try {
+      const templates = await disabledClient.listResourceTemplates();
+      expect(templates.resourceTemplates.some((t) => t.uriTemplate === 'joomla://catalog/djclassifieds/{site}')).toBe(false);
+    } finally {
+      await disabledClient.close();
+      await disabledServer.close();
+    }
+
+    const enabledServer = createServer({
+      ...base(),
+      features: {
+        djclassifiedsReferenceResource: { enabled: true, maxTables: 53, maxColumns: 120, maxSampleRows: 5 },
+      },
+    });
+    const enabledClient = new Client({ name: 'test-client', version: '1.0.0' });
+    const [enabledClientTransport, enabledServerTransport] = InMemoryTransport.createLinkedPair();
+    await enabledServer.connect(enabledServerTransport);
+    await enabledClient.connect(enabledClientTransport);
+
+    try {
+      const templates = await enabledClient.listResourceTemplates();
+      const template = templates.resourceTemplates.find((t) => t.uriTemplate === 'joomla://catalog/djclassifieds/{site}');
+      expect(template).toBeDefined();
+      expect(template?.name).toBe('joomla-djclassifieds-reference');
+    } finally {
+      await enabledClient.close();
+      await enabledServer.close();
+    }
+  });
 });

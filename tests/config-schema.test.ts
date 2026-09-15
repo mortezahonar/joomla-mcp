@@ -20,6 +20,57 @@ describe('RawConfigurationSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts an optional central features section with bounded resource limits', () => {
+    const result = RawConfigurationSchema.safeParse({
+      defaultSite: 'production',
+      sites: {
+        production: {
+          toolsets: ['discovery', 'djclassifieds.read'],
+          api: {
+            baseUrl: 'https://example.test',
+            tokenEnv: 'JOOMLA_TOKEN',
+          },
+        },
+      },
+      features: {
+        djclassifiedsReferenceResource: {
+          enabled: true,
+          maxTables: 53,
+          maxColumns: 120,
+          maxSampleRows: 5,
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    expect(result.data.features?.djclassifiedsReferenceResource).toEqual({
+      enabled: true,
+      maxTables: 53,
+      maxColumns: 120,
+      maxSampleRows: 5,
+    });
+  });
+
+  it('rejects out-of-range central resource limits', () => {
+    const result = RawConfigurationSchema.safeParse({
+      defaultSite: 'production',
+      sites: {
+        production: {
+          toolsets: ['discovery'],
+          api: { baseUrl: 'https://example.test', tokenEnv: 'JOOMLA_TOKEN' },
+        },
+      },
+      features: {
+        djclassifiedsReferenceResource: { enabled: true, maxSampleRows: 51 },
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('rejects HTTP origins and unknown default sites', () => {
     const result = RawConfigurationSchema.safeParse({
       defaultSite: 'missing',

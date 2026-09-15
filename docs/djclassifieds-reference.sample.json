@@ -1,0 +1,886 @@
+{
+  "meta": {
+    "component": "com_djclassifieds",
+    "version": "3.11.1",
+    "author": "DJ-Extensions.com",
+    "source": "administrator/components/com_djclassifieds/sql/install.sql",
+    "generatedFor": "j6.test",
+    "generatedAt": "2026-09-15",
+    "note": "Sample reference. The live djclassifieds.inspect action re-generates this from the installed component and database."
+  },
+  "database": {
+    "tableCount": 53,
+    "tables": [
+      {
+        "table": "#__djcf_categories",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(191)", "key": "INDEX", "notNull": true },
+          { "name": "alias", "type": "VARCHAR(255)", "default": "" },
+          { "name": "parent_id", "type": "int(11)", "key": "INDEX", "default": "0", "ref": "#__djcf_categories.id" },
+          { "name": "price", "type": "int(11)", "default": "0" },
+          { "name": "description", "type": "text", "notNull": true },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "key": "INDEX", "default": "1" },
+          { "name": "autopublish", "type": "int(11)", "default": "0" },
+          { "name": "metakey", "type": "VARCHAR(2000)", "default": "" },
+          { "name": "metadesc", "type": "VARCHAR(2000)", "default": "" },
+          { "name": "access", "type": "int(11)", "default": "0" },
+          { "name": "points", "type": "int(11)", "default": "0" },
+          { "name": "ads_disabled", "type": "int(11)", "default": "0" },
+          { "name": "theme", "type": "varchar(255)", "default": "" },
+          { "name": "access_view", "type": "int(11)", "default": "1" },
+          { "name": "access_item_view", "type": "int(11)", "default": "1" },
+          { "name": "restriction_18", "type": "int(11)", "default": "0" },
+          { "name": "rev_group_id", "type": "int(11)", "default": "0" },
+          { "name": "schema_type", "type": "varchar(255)", "default": "" },
+          { "name": "metarobots", "type": "VARCHAR(255)", "default": "" },
+          { "name": "metatitle", "type": "VARCHAR(2000)", "default": "" },
+          { "name": "ads_limit", "type": "int(11)", "default": "0" },
+          { "name": "header_text", "type": "varchar(1000)", "default": "" },
+          { "name": "map_marker_icon", "type": "VARCHAR(255)", "default": "" },
+          { "name": "auction_disabled", "type": "int(11)", "default": "0" },
+          { "name": "buynow_disabled", "type": "int(11)", "default": "0" },
+          { "name": "offer_disabled", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": ["name", "published", "parent_id"]
+      },
+      {
+        "table": "#__djcf_categories_groups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "INT(11)", "key": "PK", "autoIncrement": true },
+          { "name": "cat_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_categories.id" },
+          { "name": "group_id", "type": "INT(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_fields",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "group_id", "type": "varchar(255)", "default": "0" },
+          { "name": "name", "type": "varchar(255)", "key": "INDEX", "notNull": true },
+          { "name": "label", "type": "varchar(255)", "notNull": true },
+          { "name": "type", "type": "varchar(255)", "key": "INDEX", "notNull": true },
+          { "name": "values", "type": "text", "notNull": true },
+          { "name": "default_value", "type": "varchar(255)", "default": "" },
+          { "name": "params", "type": "text", "notNull": true },
+          { "name": "in_search", "type": "int(11)", "default": "0" },
+          { "name": "search_type", "type": "varchar(255)", "default": "" },
+          { "name": "search_value1", "type": "text", "notNull": true },
+          { "name": "search_value2", "type": "text", "notNull": true },
+          { "name": "published", "type": "int(11)", "key": "INDEX", "default": "0" },
+          { "name": "required", "type": "int(11)", "default": "0" },
+          { "name": "description", "type": "TEXT", "notNull": true },
+          { "name": "access", "type": "int(11)", "default": "1" },
+          { "name": "in_table", "type": "int(11)", "default": "0" },
+          { "name": "in_blog", "type": "int(11)", "default": "0" },
+          { "name": "in_item", "type": "int(11)", "default": "0" },
+          { "name": "in_module", "type": "int(11)", "default": "0" },
+          { "name": "source", "type": "int(11)", "key": "INDEX", "notNull": true },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "numbers_only", "type": "int(11)", "default": "0" },
+          { "name": "in_registration", "type": "int(11)", "default": "0" },
+          { "name": "hide_on_start", "type": "int(11)", "default": "0" },
+          { "name": "profile_source", "type": "INT(11)", "default": "0" },
+          { "name": "core_source", "type": "varchar(255)", "default": "" },
+          { "name": "in_search_on_start", "type": "int(11)", "default": "0" },
+          { "name": "date_format", "type": "varchar(55)", "default": "" },
+          { "name": "edition_blocked", "type": "int(11)", "default": "0" },
+          { "name": "chx_filter_logic", "type": "int(11)", "default": "0" },
+          { "name": "class", "type": "text", "notNull": true },
+          { "name": "attribs", "type": "TEXT" },
+          { "name": "all_cats", "type": "INT(11)", "default": "0" },
+          { "name": "input_type", "type": "VARCHAR(100)", "default": "" },
+          { "name": "placeholder", "type": "VARCHAR(1000)", "default": "" },
+          { "name": "search_show_label", "type": "int(11)", "default": "1" },
+          { "name": "icon", "type": "varchar(255)", "default": "" },
+          { "name": "use_in_word_search", "type": "INT(11)", "default": "0" },
+          { "name": "sortable", "type": "INT(11)", "default": "0" },
+          { "name": "search_placeholder1", "type": "VARCHAR(500)", "default": "" },
+          { "name": "search_placeholder2", "type": "VARCHAR(500)", "default": "" },
+          { "name": "askform_cc", "type": "INT(11)", "default": "0" },
+          { "name": "search_ordering", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": ["name", "type", "published", "source"]
+      },
+      {
+        "table": "#__djcf_fields_values",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "field_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_fields.id" },
+          { "name": "item_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "value", "type": "text", "notNull": true },
+          { "name": "value_date", "type": "DATE", "nullable": true },
+          { "name": "value_date_to", "type": "DATE", "nullable": true }
+        ],
+        "indexes": ["field_id", "item_id"]
+      },
+      {
+        "table": "#__djcf_fields_values_profile",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "field_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_fields.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "value", "type": "text", "notNull": true },
+          { "name": "value_date", "type": "DATE", "nullable": true },
+          { "name": "value_date_to", "type": "DATE", "nullable": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_fields_xref",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "cat_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_categories.id" },
+          { "name": "field_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_fields.id" },
+          { "name": "ordering", "type": "int(11)", "notNull": true }
+        ],
+        "indexes": ["cat_id"]
+      },
+      {
+        "table": "#__djcf_images",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "type", "type": "varchar(55)", "key": "INDEX", "notNull": true },
+          { "name": "name", "type": "varchar(255)", "notNull": true },
+          { "name": "ext", "type": "varchar(55)", "notNull": true },
+          { "name": "path", "type": "varchar(512)", "notNull": true },
+          { "name": "caption", "type": "VARCHAR(1000)", "default": "" },
+          { "name": "ordering", "type": "int(11)", "notNull": true },
+          { "name": "optimized", "type": "INT(11)", "default": "0" }
+        ],
+        "indexes": ["item_id", "type"]
+      },
+      {
+        "table": "#__djcf_items",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "cat_id", "type": "int(11)", "key": "INDEX", "default": "0", "ref": "#__djcf_categories.id" },
+          { "name": "type_id", "type": "int(11)", "key": "INDEX", "default": "0", "ref": "#__djcf_types.id" },
+          { "name": "user_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__users.id" },
+          { "name": "name", "type": "varchar(191)", "key": "INDEX", "notNull": true },
+          { "name": "alias", "type": "VARCHAR(255)", "notNull": true },
+          { "name": "description", "type": "text", "nullable": true },
+          { "name": "intro_desc", "type": "text", "nullable": true },
+          { "name": "date_start", "type": "timestamp", "key": "INDEX", "default": "CURRENT_TIMESTAMP" },
+          { "name": "date_exp", "type": "timestamp", "key": "INDEX", "default": "0000-00-00 00:00:00" },
+          { "name": "date_mod", "type": "timestamp", "default": "0000-00-00 00:00:00" },
+          { "name": "date_sort", "type": "timestamp", "key": "INDEX", "notNull": true },
+          { "name": "display", "type": "int(11)", "key": "INDEX", "default": "0" },
+          { "name": "special", "type": "int(11)", "default": "0" },
+          { "name": "notify", "type": "varchar(255)", "default": "" },
+          { "name": "published", "type": "int(11)", "key": "INDEX", "default": "1" },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "price", "type": "VARCHAR(191)", "default": "" },
+          { "name": "price_negotiable", "type": "INT(11)", "default": "0" },
+          { "name": "contact", "type": "text", "nullable": true },
+          { "name": "pay_type", "type": "varchar(255)", "nullable": true },
+          { "name": "address", "type": "VARCHAR(255)", "default": "" },
+          { "name": "region_id", "type": "int(11)", "key": "INDEX", "default": "0", "ref": "#__djcf_regions.id" },
+          { "name": "exp_days", "type": "INT(11)", "default": "0" },
+          { "name": "promotions", "type": "text", "notNull": true },
+          { "name": "post_code", "type": "VARCHAR(55)", "default": "" },
+          { "name": "video", "type": "VARCHAR(1000)", "default": "" },
+          { "name": "website", "type": "VARCHAR(255)", "default": "" },
+          { "name": "ip_address", "type": "VARCHAR(55)", "default": "" },
+          { "name": "currency", "type": "VARCHAR(55)", "default": "" },
+          { "name": "metakey", "type": "VARCHAR(1000)", "default": "" },
+          { "name": "metadesc", "type": "VARCHAR(1000)", "default": "" },
+          { "name": "latitude", "type": "DECIMAL(18,15)", "default": "0" },
+          { "name": "longitude", "type": "DECIMAL(18,15)", "default": "0" },
+          { "name": "email", "type": "VARCHAR(255)", "default": "" },
+          { "name": "token", "type": "VARCHAR(55)", "default": "" },
+          { "name": "access_view", "type": "int(11)", "default": "0" },
+          { "name": "extra_images", "type": "int(11)", "default": "0" },
+          { "name": "extra_images_to_pay", "type": "int(11)", "default": "0" },
+          { "name": "extra_chars", "type": "int(11)", "default": "0" },
+          { "name": "extra_chars_to_pay", "type": "int(11)", "default": "0" },
+          { "name": "auction", "type": "INT(11)", "default": "0" },
+          { "name": "bid_min", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "bid_max", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "bid_autoclose", "type": "INT(11)", "default": "0" },
+          { "name": "price_reserve", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "price_start", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "quantity", "type": "INT(11)", "default": "0" },
+          { "name": "buynow", "type": "INT(11)", "default": "0" },
+          { "name": "unit_id", "type": "INT(11)", "default": "0", "ref": "#__djcf_items_units.id" },
+          { "name": "offer", "type": "INT(11)", "default": "0" },
+          { "name": "blocked", "type": "INT(11)", "key": "INDEX", "default": "0" },
+          { "name": "metarobots", "type": "VARCHAR(255)", "default": "" },
+          { "name": "new_draft", "type": "int(11)", "default": "0" },
+          { "name": "last_view", "type": "timestamp", "key": "INDEX", "default": "0000-00-00 00:00:00" },
+          { "name": "new", "type": "int(11)", "default": "0" },
+          { "name": "date_renew", "type": "datetime", "nullable": true },
+          { "name": "auction_assist", "type": "int(11)", "default": "0" },
+          { "name": "date_unverif", "type": "datetime", "nullable": true }
+        ],
+        "indexes": ["cat_id", "type_id", "region_id", "user_id", "name", "published", "blocked", "date_start", "date_sort", "date_exp", "display", "last_view", "special_name", "special_price", "special_date_start", "special_date_sort", "special_date_exp", "special_display", "special_last_view"]
+      },
+      {
+        "table": "#__djcf_itemsask",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "ip_address", "type": "varchar(50)", "notNull": true },
+          { "name": "message", "type": "text", "notNull": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "custom_fields", "type": "text", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_items_abuse",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "message", "type": "text", "notNull": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_payments",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "method", "type": "varchar(255)", "notNull": true },
+          { "name": "transaction_id", "type": "VARCHAR(255)", "default": "" },
+          { "name": "transaction_hash", "type": "varchar(255)", "nullable": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "status", "type": "varchar(255)", "notNull": true },
+          { "name": "price", "type": "decimal(12,2)", "default": "0" },
+          { "name": "ip_address", "type": "varchar(55)", "default": "" },
+          { "name": "type", "type": "varchar(55)", "default": "" },
+          { "name": "coupon", "type": "VARCHAR(55)", "default": "" },
+          { "name": "coupon_discount", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "type_details", "type": "VARCHAR(255)", "default": "" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_regions",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(191)", "key": "INDEX", "notNull": true },
+          { "name": "parent_id", "type": "int(11)", "key": "INDEX", "default": "0", "ref": "#__djcf_regions.id" },
+          { "name": "country", "type": "int(11)", "default": "0" },
+          { "name": "city", "type": "int(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "key": "INDEX", "default": "1" },
+          { "name": "latitude", "type": "DECIMAL(18,15)", "default": "0" },
+          { "name": "longitude", "type": "DECIMAL(18,15)", "default": "0" },
+          { "name": "country_iso", "type": "varchar(2)", "default": "" },
+          { "name": "header_text", "type": "varchar(1000)", "default": "" },
+          { "name": "alias", "type": "VARCHAR(255)", "default": "" },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "metatitle", "type": "VARCHAR(2000)", "default": "" },
+          { "name": "metakey", "type": "VARCHAR(2000)", "default": "" },
+          { "name": "metadesc", "type": "VARCHAR(2000)", "default": "" },
+          { "name": "metarobots", "type": "VARCHAR(255)", "default": "" },
+          { "name": "ads_disabled", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": ["name", "parent_id", "published"]
+      },
+      {
+        "table": "#__djcf_favourites",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__users.id" }
+        ],
+        "indexes": ["item_id", "user_id"]
+      },
+      {
+        "table": "#__djcf_days",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "days", "type": "int(11)", "default": "0" },
+          { "name": "price", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "points", "type": "INT(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "default": "1" },
+          { "name": "price_renew", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "points_renew", "type": "INT(11)", "default": "0" },
+          { "name": "img_price", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "img_points", "type": "INT(11)", "default": "0" },
+          { "name": "img_price_renew", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "img_points_renew", "type": "INT(11)", "default": "0" },
+          { "name": "img_price_default", "type": "INT(11)", "default": "1" },
+          { "name": "char_price", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "char_points", "type": "INT(11)", "default": "0" },
+          { "name": "char_price_renew", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "char_points_renew", "type": "INT(11)", "default": "0" },
+          { "name": "char_price_default", "type": "INT(11)", "default": "1" },
+          { "name": "label", "type": "VARCHAR(255)", "default": "" },
+          { "name": "ug_access_disallow", "type": "INT(11)", "default": "0" },
+          { "name": "cat_access_disallow", "type": "INT(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_promotions",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(255)", "notNull": true },
+          { "name": "label", "type": "varchar(255)", "notNull": true },
+          { "name": "description", "type": "varchar(255)", "default": "" },
+          { "name": "price", "type": "decimal(12,2)", "default": "0" },
+          { "name": "points", "type": "int(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "default": "1" },
+          { "name": "ordering", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_types",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "VARCHAR(255)", "default": "" },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "points", "type": "INT(11)", "default": "0" },
+          { "name": "ordering", "type": "INT(11)", "default": "0" },
+          { "name": "published", "type": "INT(11)", "default": "1" },
+          { "name": "params", "type": "TEXT", "notNull": true },
+          { "name": "ug_access_disallow", "type": "INT(11)", "default": "0" },
+          { "name": "cat_access_disallow", "type": "INT(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_points",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(255)", "default": "" },
+          { "name": "description", "type": "TEXT", "notNull": true },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "points", "type": "int(11)", "default": "0" },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "default": "1" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_points_groups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "points_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_points.id" },
+          { "name": "group_id", "type": "int(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_users_points",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "UNIQUE", "autoIncrement": true },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "points", "type": "float(12,0)", "notNull": true },
+          { "name": "description", "type": "text", "notNull": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "desc_json", "type": "text", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_auctions",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "ip_address", "type": "varchar(55)", "notNull": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "price", "type": "DECIMAL(12,2)", "notNull": true },
+          { "name": "win", "type": "int(11)", "notNull": true },
+          { "name": "closed", "type": "datetime", "nullable": true },
+          { "name": "assist", "type": "INT(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_emails",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "label", "type": "varchar(255)", "notNull": true },
+          { "name": "title", "type": "VARCHAR(255)", "notNull": true },
+          { "name": "content", "type": "text", "nullable": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_orders",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "ip_address", "type": "VARCHAR(55)", "default": "" },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "currency", "type": "varchar(55)", "default": "" },
+          { "name": "quantity", "type": "int(11)", "default": "1" },
+          { "name": "status", "type": "int(11)", "default": "0" },
+          { "name": "item_name", "type": "varchar(255)", "default": "" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_files",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "type", "type": "varchar(64)", "notNull": true },
+          { "name": "fullname", "type": "varchar(255)", "notNull": true },
+          { "name": "name", "type": "varchar(255)", "notNull": true },
+          { "name": "ext", "type": "varchar(255)", "notNull": true },
+          { "name": "path", "type": "varchar(255)", "nullable": true },
+          { "name": "fullpath", "type": "varchar(255)", "nullable": true },
+          { "name": "caption", "type": "VARCHAR(1000)", "default": "" },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "hits", "type": "int(11)", "default": "0" },
+          { "name": "description", "type": "text", "notNull": true }
+        ],
+        "indexes": ["idx_type_item", "idx_item_type", "idx_item_type_ordering"]
+      },
+      {
+        "table": "#__djcf_items_shipping",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "shipping_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_shipping_methods.id" },
+          { "name": "price", "type": "decimal(12,2)", "default": "0" },
+          { "name": "description", "type": "text", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_orders_shipping",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "order_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_orders.id" },
+          { "name": "shipping_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_shipping_methods.id" },
+          { "name": "name", "type": "varchar(255)", "default": "" },
+          { "name": "price", "type": "decimal(12,2)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_plans",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(255)", "notNull": true },
+          { "name": "description", "type": "text", "notNull": true },
+          { "name": "price", "type": "FLOAT(12,2)", "default": "0" },
+          { "name": "points", "type": "INT(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "notNull": true },
+          { "name": "ordering", "type": "int(11)", "notNull": true },
+          { "name": "groups_assignment", "type": "text", "notNull": true },
+          { "name": "groups_restriction", "type": "text", "notNull": true },
+          { "name": "params", "type": "text", "notNull": true },
+          { "name": "recurring", "type": "INT(11)", "default": "0" },
+          { "name": "hidden_labels", "type": "text", "notNull": true },
+          { "name": "groups_assignment_exp", "type": "text", "notNull": true },
+          { "name": "one_time", "type": "INT(11)", "default": "0" },
+          { "name": "exp_type", "type": "VARCHAR(55)", "default": "" },
+          { "name": "groups_deassignment", "type": "text", "notNull": true },
+          { "name": "verify", "type": "int(11)", "default": "0" },
+          { "name": "unverify_exp", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_plans_groups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "plan_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_plans.id" },
+          { "name": "group_id", "type": "int(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_plans_subscr",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "plan_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_plans.id" },
+          { "name": "adverts_limit", "type": "int(11)", "notNull": true },
+          { "name": "adverts_available", "type": "int(11)", "notNull": true },
+          { "name": "date_start", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "date_exp", "type": "datetime", "notNull": true },
+          { "name": "plan_params", "type": "text", "notNull": true },
+          { "name": "notify", "type": "INT(11)", "default": "0" },
+          { "name": "recurring", "type": "INT(11)", "default": "0" },
+          { "name": "recurr_status", "type": "VARCHAR(255)", "default": "" },
+          { "name": "recurr_data", "type": "TEXT", "nullable": true },
+          { "name": "notify_expired", "type": "varchar(255)", "default": "" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_plans_subscr_items",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "subscr_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_plans_subscr.id" },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "item_name", "type": "text", "notNull": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "draft", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_plans_subscr_items_renew",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "subscr_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_plans_subscr.id" },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_shipping_methods",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(255)", "key": "INDEX", "notNull": true },
+          { "name": "description", "type": "text", "nullable": true },
+          { "name": "published", "type": "tinyint(4)", "key": "INDEX", "notNull": true },
+          { "name": "plugin", "type": "varchar(255)", "key": "INDEX", "notNull": true },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "params", "type": "text", "nullable": true }
+        ],
+        "indexes": ["idx_published", "idx_name", "idx_plugin"]
+      },
+      {
+        "table": "#__djcf_items_units",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(255)", "notNull": true },
+          { "name": "ordering", "type": "int(11)", "default": "0" },
+          { "name": "published", "type": "int(11)", "default": "1" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_groups_prices",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "type", "type": "varchar(55)", "notNull": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "group_id", "type": "int(11)", "notNull": true, "ref": "#__usergroups.id" },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "points", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_offers",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "quantity", "type": "int(11)", "default": "1" },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "currency", "type": "varchar(55)", "default": "" },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "ip_address", "type": "varchar(55)", "default": "" },
+          { "name": "message", "type": "text", "notNull": true },
+          { "name": "response", "type": "TEXT", "nullable": true },
+          { "name": "status", "type": "INT(11)", "default": "0" },
+          { "name": "paid", "type": "INT(11)", "default": "0" },
+          { "name": "confirmed", "type": "INT(11)", "default": "0" },
+          { "name": "request", "type": "INT(11)", "default": "0" },
+          { "name": "admin_paid", "type": "INT(11)", "default": "0" },
+          { "name": "item_name", "type": "varchar(255)", "default": "" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_items_categories",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "cat_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_categories.id" },
+          { "name": "ordering", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": ["item_id", "cat_id"]
+      },
+      {
+        "table": "#__djcf_coupons",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "coupon_code", "type": "VARCHAR(55)", "default": "" },
+          { "name": "name", "type": "varchar(255)", "default": "" },
+          { "name": "description", "type": "text", "notNull": true },
+          { "name": "groups_restriction", "type": "text", "notNull": true },
+          { "name": "created", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "published", "type": "int(11)", "default": "1" },
+          { "name": "usage_count", "type": "int(11)", "default": "0" },
+          { "name": "params", "type": "text", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_coupons_groups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "coupon_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_coupons.id" },
+          { "name": "group_id", "type": "int(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_items_promotions",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "prom_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_promotions.id" },
+          { "name": "date_start", "type": "datetime", "notNull": true },
+          { "name": "date_exp", "type": "datetime", "key": "INDEX", "notNull": true },
+          { "name": "days", "type": "int(11)", "notNull": true },
+          { "name": "updated", "type": "INT(11)", "default": "0" },
+          { "name": "notify", "type": "varchar(255)", "default": "" }
+        ],
+        "indexes": ["item_id", "prom_id", "date_exp"]
+      },
+      {
+        "table": "#__djcf_promotions_prices",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "prom_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_promotions.id" },
+          { "name": "days", "type": "int(11)", "default": "0" },
+          { "name": "price", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "points", "type": "int(11)", "default": "0" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_search_alerts",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "search_url", "type": "text", "notNull": true },
+          { "name": "search_query", "type": "text", "notNull": true },
+          { "name": "created", "type": "datetime", "notNull": true },
+          { "name": "last_check", "type": "datetime", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_search_notifications",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "UNIQUE", "autoIncrement": true },
+          { "name": "search_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_search_alerts.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "created", "type": "datetime", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_profiles",
+        "role": "core",
+        "fields": [
+          { "name": "user_id", "type": "int(11)", "key": "PK", "notNull": true, "ref": "#__users.id" },
+          { "name": "group_id", "type": "int(11)", "default": "0", "ref": "#__djcf_fields_groups.id" },
+          { "name": "region_id", "type": "INT(11)", "default": "0", "ref": "#__djcf_regions.id" },
+          { "name": "address", "type": "VARCHAR(255)", "default": "" },
+          { "name": "post_code", "type": "VARCHAR(55)", "default": "" },
+          { "name": "latitude", "type": "DECIMAL(18,15)", "default": "0" },
+          { "name": "longitude", "type": "DECIMAL(18,15)", "default": "0" },
+          { "name": "verified", "type": "INT(11)", "default": "0" },
+          { "name": "disabled_emails", "type": "VARCHAR(255)", "default": "" },
+          { "name": "description", "type": "text", "nullable": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_days_xref",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "cat_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_categories.id" },
+          { "name": "day_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_days.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_fields_groups",
+        "role": "core",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "name", "type": "varchar(255)", "notNull": true },
+          { "name": "source", "type": "varchar(255)", "notNull": true },
+          { "name": "groups_assignment", "type": "text", "notNull": true },
+          { "name": "ordering", "type": "int(11)", "notNull": true },
+          { "name": "access", "type": "int(11)", "default": "1" },
+          { "name": "published", "type": "int(11)", "default": "1" },
+          { "name": "show_title", "type": "int(11)", "default": "0" },
+          { "name": "show_title_in_forms", "type": "int(11)", "default": "0" },
+          { "name": "in_registration", "type": "int(11)", "default": "1" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_profiles_msg",
+        "role": "child",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "user_to", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "user_from", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "ip_address", "type": "varchar(50)", "notNull": true },
+          { "name": "message", "type": "text", "notNull": true },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" },
+          { "name": "custom_fields", "type": "text", "notNull": true }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_days_groups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "INT(11)", "key": "PK", "autoIncrement": true },
+          { "name": "day_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_days.id" },
+          { "name": "group_id", "type": "INT(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_fields_groups_usergroups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "INT(11)", "key": "PK", "autoIncrement": true },
+          { "name": "group_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_fields_groups.id" },
+          { "name": "usergroup_id", "type": "INT(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_promotions_prices_usergroups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "INT(11)", "key": "PK", "autoIncrement": true },
+          { "name": "prom_price_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_promotions_prices.id" },
+          { "name": "prom_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_promotions.id" },
+          { "name": "usergroup_id", "type": "INT(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_profiles_fav",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "profile_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__djcf_profiles.user_id" },
+          { "name": "user_id", "type": "int(11)", "key": "INDEX", "notNull": true, "ref": "#__users.id" }
+        ],
+        "indexes": ["profile_id", "user_id"]
+      },
+      {
+        "table": "#__djcf_auctions_assist",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "item_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_items.id" },
+          { "name": "user_id", "type": "int(11)", "notNull": true, "ref": "#__users.id" },
+          { "name": "max_bid", "type": "DECIMAL(12,2)", "default": "0" },
+          { "name": "date", "type": "timestamp", "default": "CURRENT_TIMESTAMP" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_types_groups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "INT(11)", "key": "PK", "autoIncrement": true },
+          { "name": "type_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_types.id" },
+          { "name": "group_id", "type": "INT(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_types_xref",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "int(11)", "key": "PK", "autoIncrement": true },
+          { "name": "cat_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_categories.id" },
+          { "name": "type_id", "type": "int(11)", "notNull": true, "ref": "#__djcf_types.id" }
+        ],
+        "indexes": []
+      },
+      {
+        "table": "#__djcf_fields_usergroups",
+        "role": "xref",
+        "fields": [
+          { "name": "id", "type": "INT(11)", "key": "PK", "autoIncrement": true },
+          { "name": "field_id", "type": "INT(11)", "notNull": true, "ref": "#__djcf_fields.id" },
+          { "name": "usergroup_id", "type": "INT(11)", "notNull": true, "ref": "#__usergroups.id" }
+        ],
+        "indexes": []
+      }
+    ]
+  },
+  "seedData": {
+    "emails": 38,
+    "promotions": 5,
+    "types": 4,
+    "units": 3,
+    "days": 4,
+    "promotionPrices": 5
+  },
+  "models": {
+    "site": 28,
+    "admin": 40,
+    "note": "Listed dynamically by the live inspect action from component files."
+  },
+  "views": {
+    "site": "~30 views with tmpl layouts",
+    "admin": "full admin view suite",
+    "note": "Detailed file list comes from the live inspect action."
+  },
+  "plugins": {
+    "note": "Resolved at runtime from #__extensions for type=plugin and folder/plugin name matching djclassifieds."
+  }
+}
