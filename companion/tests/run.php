@@ -231,7 +231,7 @@ test('companion self-test validates the full catalogue and fixed dispatch', stat
     $result = (new SelfTestService($registry, $allow))->evaluate();
     expect($result['ok'] === true, 'Companion self-test did not pass.');
     expect($result['checks']['pluginEnabled'] === true, 'Companion self-test did not prove plugin activation.');
-    expect($result['checks']['catalogue']['actionCount'] === 266, 'Companion self-test catalogue count changed.');
+    expect($result['checks']['catalogue']['actionCount'] === 267, 'Companion self-test catalogue count changed.');
     expect($result['checks']['dispatch']['action'] === 'system.info', 'Companion self-test did not use the fixed safe action.');
 });
 
@@ -245,7 +245,7 @@ test('Joomla factory registers the reviewed native model catalogue', static func
     $registry = (new JoomlaActionRegistryFactory(new stdClass()))->create();
     $names = array_map(static fn (ActionInterface $action): string => $action->descriptor()->name, $registry->all());
     expect(count($names) === count(array_unique($names)), 'Native action names are not unique.');
-    expect(count($names) === 266, 'The reviewed 266-action native capability catalogue changed.');
+    expect(count($names) === 267, 'The reviewed 267-action native capability catalogue changed.');
 
     foreach ([
         'configuration.application.get',

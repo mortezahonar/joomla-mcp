@@ -40,9 +40,9 @@ not mean arbitrary stock CLI execution.
   Special writes contain 22 exact body/no-body contracts, one typed core plus
   runtime-extension contract for contact submission, and four source-gated
   generic contracts.
-- The companion allowlist contains 266 fixed native actions: 180 core CRUD, 28
-  core model state actions, 35 DJ-Classifieds operations, and 23
-  supplemental/alias actions.
+- The companion allowlist contains 267 fixed native actions: 180 core CRUD, 28
+  core model state actions, 35 DJ-Classifieds entity operations, 1 read-only
+  `djclassifieds.inspect` reference action, and 23 supplemental/alias actions.
 - The edge companion catalogue contains 24 reads and 44 writes (68 descriptors):
   selected native operations, cache clean, 28 core model-state actions, 12
   DJ-Classifieds reads, and 5 DJ-Classifieds model-state actions.

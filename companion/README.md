@@ -26,12 +26,13 @@ The dispatch contract is deliberately smaller than a general Joomla CLI. Only
 actions registered in `JoomlaActionRegistryFactory` can execute. There is no
 shell, SQL, PHP, filesystem, URL, or Joomla-command passthrough.
 
-The current allowlist contains 266 actions: fixed CRUD operations for all 36
+The current allowlist contains 267 actions: fixed CRUD operations for all 36
 core entity bases, bounded state operations for supported models, 35
-DJ-Classifieds operations, and selected native operational actions. Writes preview by default and require confirmation
-from the TypeScript edge before execution. High-risk actions return pre/post
-state, verification, and recovery metadata wherever Joomla exposes a reliable
-read-back.
+DJ-Classifieds entity operations, the read-only `djclassifieds.inspect`
+live-reference action, and selected native operational actions. Writes preview
+by default and require confirmation from the TypeScript edge before execution.
+High-risk actions return pre/post state, verification, and recovery metadata
+wherever Joomla exposes a reliable read-back.
 
 The production operations available in companion 0.7.0 are:
 

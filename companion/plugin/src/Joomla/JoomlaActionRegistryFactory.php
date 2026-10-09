@@ -6,7 +6,6 @@ namespace VDM\Plugin\Console\JoomlaMcp\Joomla;
 
 use VDM\Plugin\Console\JoomlaMcp\Action\CoreEntityAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\CoreUpdateStatusAction;
-use VDM\Plugin\Console\JoomlaMcp\Action\DjClassifiedsInspectAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\CleanCacheAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\FixedModelListAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\FixedModelStateAction;
@@ -20,7 +19,7 @@ use VDM\Plugin\Console\JoomlaMcp\Action\SessionGarbageCollectionAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\SiteStateAction;
 use VDM\Plugin\Console\JoomlaMcp\Action\SystemInfoAction;
 use VDM\Plugin\Console\JoomlaMcp\Domain\ActionRegistry;
-use VDM\Plugin\Console\JoomlaMcp\Joomla\DjClassifiedsCatalogue;
+use VDM\Plugin\Console\JoomlaMcp\Provider\DjClassifiedsActionProvider;
 
 final readonly class JoomlaActionRegistryFactory
 {
@@ -32,6 +31,7 @@ final readonly class JoomlaActionRegistryFactory
     {
         $models = new JoomlaModelProvider($this->application);
         $native = new JoomlaNativeOperations($this->application);
+        $djClassifiedsProvider = new DjClassifiedsActionProvider($this->application, $models);
 
         $actions = [
             new SystemInfoAction(),
@@ -119,7 +119,7 @@ final readonly class JoomlaActionRegistryFactory
             new SessionGarbageCollectionAction($native),
             new SessionGarbageCollectionAction($native, true),
             new CoreUpdateStatusAction($models),
-            new DjClassifiedsInspectAction($this->application),
+            $djClassifiedsProvider->inspectionAction(),
         ];
 
         foreach (CoreEntityCatalogue::all() as $entity) {
@@ -132,14 +132,8 @@ final readonly class JoomlaActionRegistryFactory
             }
         }
 
-        foreach (DjClassifiedsCatalogue::all() as $entity) {
-            foreach (['list', 'get', 'create', 'update', 'delete'] as $operation) {
-                $actions[] = new CoreEntityAction($entity, $operation, $models);
-            }
-
-            if ($entity->supportsState) {
-                $actions[] = new CoreEntityAction($entity, 'state', $models);
-            }
+        foreach ($djClassifiedsProvider->entityActions() as $action) {
+            $actions[] = $action;
         }
 
         return new ActionRegistry($actions);
