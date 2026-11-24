@@ -126,8 +126,16 @@ function crudWriteAction(base: CrudBaseDescriptor, operation: CrudOperationDescr
           ...(sensitiveFields.has(field) ? { type: 'string', maxLength: 4_096, writeOnly: true } : {}),
           ...(base.id === 'content.articles' && ['articletext', 'introtext', 'fulltext'].includes(field)
             ? { type: 'string' } : {}),
+          ...((['content.articles', 'modules.site', 'modules.administrator'].includes(base.id) && ['created', 'publish_up', 'publish_down'].includes(field))
+            ? { type: field === 'created' ? 'string' : ['string', 'null'], maxLength: 64,
+              description: 'Native calendar value. API writes use the form language format (for en-GB: YYYY-MM-DD HH:mm:ss) in the authenticated user timezone; API reads return UTC. CLI writes use native model UTC SQL dates.' } : {}),
+          ...(base.id === 'content.articles' && field === 'created_by'
+            ? { type: 'integer', minimum: 1, description: 'Existing Joomla author user ID, subject to the native article form and ACL.' } : {}),
           ...(base.id === 'content.articles' && field === 'articletext'
             ? { description: articleTextDescription } : {}),
+          ...(base.id.startsWith('fields.') && field === 'assigned_cat_ids'
+            ? { type: 'array', maxItems: 1_000, items: { type: 'integer', minimum: -1, maximum: 2_147_483_647 },
+              description: 'Native category selection: positive category IDs, [0] or [] for All, [-1] for None. Joomla forces None when only_use_in_subform is enabled; contexts without categories remain subject to native form validation.' } : {}),
         }),
       ]),
     );
@@ -378,8 +386,12 @@ export function completeJoomlaApiPatchBody(
     ? ['menutype', 'type', 'parent_id', 'link', 'params']
     : base.id === 'modules.site' || base.id === 'modules.administrator'
       ? ['params', 'assigned']
-      : [];
+      : base.id.startsWith('fields.') ? ['assigned_cat_ids'] : [];
   if (preservedKeys.length === 0) return changes;
+  if (base.id.startsWith('fields.') && !Object.hasOwn(changes, 'assigned_cat_ids')
+    && !Object.hasOwn(current, 'assigned_cat_ids')) {
+    throw new Error('The native field item read omitted category assignments; a partial update cannot safely preserve them.');
+  }
 
   const derivedOrFixed = new Set([
     'request',
@@ -392,7 +404,9 @@ export function completeJoomlaApiPatchBody(
   const preserved = Object.fromEntries(
     preservedKeys
       .filter((key) => !Object.hasOwn(requested, key) && Object.hasOwn(current, key))
-      .map((key) => [key, current[key]]),
+      .map((key) => [key, key === 'assigned_cat_ids' && Array.isArray(current[key])
+        ? current[key].map((id: unknown) => typeof id === 'string' && /^(?:-1|0|[1-9][0-9]*)$/.test(id) ? Number(id) : id)
+        : current[key]]),
   );
   return withFixedMutationDefaults(
     actionId,
@@ -404,7 +418,8 @@ export function requiresJoomlaApiPatchCompletion(actionId: string): boolean {
   return actionId === 'menus.site-items.update' ||
     actionId === 'menus.administrator-items.update' ||
     actionId === 'modules.site.update' ||
-    actionId === 'modules.administrator.update';
+    actionId === 'modules.administrator.update' ||
+    joomlaCrudBases.some((base) => base.id.startsWith('fields.') && actionId === `${base.id}.update`);
 }
 
 function withFixedMutationDefaults(
@@ -413,13 +428,13 @@ function withFixedMutationDefaults(
 ): Readonly<Record<string, unknown>> {
   const base = joomlaCrudBases.find((candidate) => actionId.startsWith(`${candidate.id}.`));
   if (base === undefined) return body;
-  // The administrator field form submits an empty default for a new field.
-  // Omitting it leaves SQL NULL, which Joomla later passes to DOMCdataSection.
-  // This is a fallback, not fixed controller state: explicit values must win,
-  // and partial updates must never reset an existing field's default.
-  const createBody = base.id.startsWith('fields.') && actionId === `${base.id}.create` &&
-    !Object.hasOwn(body, 'default_value')
-    ? Object.freeze({ ...body, default_value: '' })
+  // Joomla's field controller does not complete these omitted non-null columns.
+  // The params group must contain field.xml defaults: an empty object disappears
+  // during native form filtering. Explicit values always retain native validation.
+  const createBody = actionId === `${base.id}.create` && base.controllerDefaults['component'] === 'com_fields' &&
+    Object.hasOwn(nativeFieldCreateContexts, base.basePath) &&
+    nativeFieldCreateContexts[base.basePath] === base.controllerDefaults['context']
+    ? Object.freeze({ ...nativeFieldCreateDefaults, ...body })
     : body;
   const normalized = withJoomlaDerivedMutationFields(base.id, createBody);
   const fixed = Object.fromEntries(
@@ -434,6 +449,23 @@ function withFixedMutationDefaults(
     ? normalized
     : Object.freeze({ ...normalized, ...fixed });
 }
+
+/** Exact Joomla 6 native field routes and controller-owned contexts. */
+const nativeFieldCreateContexts: Readonly<Record<string, string>> = Object.freeze({
+  'v1/fields/content/articles': 'com_content.article',
+  'v1/fields/content/categories': 'com_content.categories',
+  'v1/fields/contacts/contact': 'com_contact.contact',
+  'v1/fields/contacts/categories': 'com_contact.categories',
+  'v1/fields/contacts/mail': 'com_contact.mail',
+  'v1/fields/users': 'com_users.user',
+});
+
+/** Joomla 6.1.4 administrator/components/com_fields/forms/field.xml defaults. */
+const nativeFieldCreateDefaults = Object.freeze({
+  default_value: '',
+  description: '',
+  params: Object.freeze({ show_on: '', showlabel: '1', display: '2', display_readonly: '2', searchindex: '0' }),
+});
 
 function withFixedReadDefaults(
   actionId: string,
@@ -582,7 +614,21 @@ function validateMutationProperty(
 ): void {
   const type = schema['type'];
 
-  if (type === 'string') {
+  if (Array.isArray(type)) {
+    for (const alternative of type) {
+      try {
+        validateMutationProperty(value, { ...schema, type: alternative }, path);
+        return;
+      } catch {
+        // A union accepts a value only when one complete alternative matches.
+      }
+    }
+    throw new Error(`${path} does not match its permitted types.`);
+  }
+
+  if (type === 'null') {
+    if (value !== null) throw new Error(`${path} must be null.`);
+  } else if (type === 'string') {
     if (typeof value !== 'string') throw new Error(`${path} must be a string.`);
     if (typeof schema['minLength'] === 'number' && value.length < schema['minLength']) {
       throw new Error(`${path} is shorter than the permitted minimum.`);

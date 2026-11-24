@@ -14,6 +14,7 @@ use VDM\Plugin\Console\JoomlaMcp\Contract\ModelProviderInterface;
 use VDM\Plugin\Console\JoomlaMcp\Domain\ActionDescriptor;
 use VDM\Plugin\Console\JoomlaMcp\Domain\ActionException;
 use VDM\Plugin\Console\JoomlaMcp\Domain\CoreEntityDefinition;
+use VDM\Plugin\Console\JoomlaMcp\Domain\FieldCreateDefaults;
 use VDM\Plugin\Console\JoomlaMcp\Domain\Input;
 use VDM\Plugin\Console\JoomlaMcp\Joomla\ModelListPage;
 use VDM\Plugin\Console\JoomlaMcp\Joomla\TemplateStyleInheritance;
@@ -192,12 +193,14 @@ final readonly class CoreEntityAction implements ActionInterface
             throw new ActionException('INVALID_INPUT', 'Create data must contain at least one allowed field.');
         }
 
-        // Joomla's administrator field form submits an empty default value.
-        // Supply it only for a new field with an omitted key; updates and
-        // explicit values retain their native model semantics.
+        // Complete omitted field form values before the native model validates
+        // them. Explicit values and updates retain their native semantics.
         if ($this->entity->component === 'com_fields' && $this->entity->itemModel === 'Field'
-            && !array_key_exists('default_value', $data)) {
-            $data['default_value'] = '';
+            && in_array($this->entity->defaults['context'] ?? null, [
+                'com_content.article', 'com_content.categories', 'com_contact.contact',
+                'com_contact.categories', 'com_contact.mail', 'com_users.user',
+            ], true)) {
+            $data = FieldCreateDefaults::complete($data);
         }
 
         $inheritance = in_array($this->entity->id, ['templates.site-styles', 'templates.administrator-styles'], true)
@@ -351,6 +354,13 @@ final readonly class CoreEntityAction implements ActionInterface
         $result = [];
 
         foreach ($data as $field => $value) {
+            if ($field === 'assigned_cat_ids' && $this->entity->component === 'com_fields'
+                && $this->entity->itemModel === 'Field'
+                && (!is_array($value) || !array_is_list($value) || count($value) > 1_000
+                    || array_filter($value, static fn (mixed $id): bool => (!is_int($id)
+                        && !(is_float($id) && is_finite($id) && floor($id) === $id)) || $id < -1 || $id > 2_147_483_647) !== [])) {
+                throw new ActionException('INVALID_INPUT', 'Category assignments must be a bounded list of integer category IDs, including 0 (All) and -1 (None).');
+            }
             if (in_array($field, $this->entity->sensitiveFields, true)
                 && (!is_string($value) || $value === '' || strlen($value) > 4_096 || str_contains($value, "\0"))) {
                 throw new ActionException('INVALID_INPUT', sprintf('Sensitive field "%s" has an invalid value.', $field));
@@ -818,6 +828,11 @@ final readonly class CoreEntityAction implements ActionInterface
                     'type' => ['string', 'integer', 'number', 'boolean', 'array', 'object', 'null'],
                     'writeOnly' => in_array($field, $this->entity->sensitiveFields, true),
                 ];
+                if ($field === 'assigned_cat_ids' && $this->entity->component === 'com_fields'
+                    && $this->entity->itemModel === 'Field') {
+                    $fieldSchemas[$field] = ['type' => 'array', 'maxItems' => 1_000,
+                        'items' => ['type' => 'integer', 'minimum' => -1, 'maximum' => 2_147_483_647]];
+                }
             }
 
             $properties['data'] = [

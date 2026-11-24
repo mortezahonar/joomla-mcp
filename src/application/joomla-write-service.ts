@@ -47,6 +47,7 @@ import {
 } from '../security/permission-grant-service.js';
 import { SiteRegistry } from './site-registry.js';
 import {
+  compareSubformCustomField,
   customFieldInput,
   customFieldTarget,
   encodeCustomFieldBody,
@@ -55,6 +56,7 @@ import {
 } from './custom-fields.js';
 import { isTemplateStyleCreate, templateStyleInheritance } from './template-style-inheritance.js';
 import { executeMenuComponentBinding, isMenuItemWrite, prepareMenuComponentBinding } from './menu-component-binding.js';
+import { verifyNativeMedia, type NativeMediaVerification } from './native-media-verification.js';
 
 const idempotencyKeySchema = z.uuid();
 const crudWriteActionIds = new Set(joomlaCrudWriteActions.map((action) => action.id));
@@ -72,8 +74,10 @@ const articleFields = {
   language: z.string().max(50).optional(),
   metadesc: z.string().max(1_000).optional(),
   metakey: z.string().max(1_000).optional(),
-  publish_up: z.iso.datetime({ local: true }).nullable().optional(),
-  publish_down: z.iso.datetime({ local: true }).nullable().optional(),
+  created: z.string().max(64).optional().describe('Native calendar date in the API user timezone and form language format (en-GB: YYYY-MM-DD HH:mm:ss); CLI uses native model UTC SQL dates.'),
+  created_by: z.int().positive().optional(),
+  publish_up: z.string().max(64).nullable().optional(),
+  publish_down: z.string().max(64).nullable().optional(),
 } as const;
 
 export const ArticleCreateSchema = z.object(articleFields).catchall(z.unknown());
@@ -581,15 +585,19 @@ export class JoomlaWriteService {
           if (oldest !== undefined) this.completed.delete(oldest);
         }
         this.completed.set(cacheKey, { fingerprint, value, completedAt: Date.now() });
+        const fieldVerification = asRecord(asRecord(verification)['customFieldVerification']);
+        const mediaVerification = asRecord(asRecord(verification)['nativeMediaVerification']);
+        const fieldMismatch = fieldVerification['status'] === 'uncertain' || mediaVerification['status'] === 'uncertain';
         await this.audit?.write({
           timestamp: new Date().toISOString(),
-          event: 'write.applied',
+          event: fieldMismatch ? 'write.failed' : 'write.applied',
           site: operation.site,
           action: operation.action,
           idempotencyKey: operation.idempotencyKey,
           principalFingerprint: principalFingerprint(principal),
           transport,
-          outcome: 'success',
+          outcome: fieldMismatch ? 'failure' : 'success',
+          ...(fieldMismatch ? { detail: 'The accepted write has an uncertain field read-back; inspect before another write.' } : {}),
         });
         return value;
       } catch (error) {
@@ -737,7 +745,13 @@ export class JoomlaWriteService {
     operation: PlannedOperation,
     mutation: JoomlaApiResponse,
   ): Promise<
-    JoomlaApiResponse
+    (JoomlaApiResponse & { readonly nativeMediaVerification?: NativeMediaVerification; readonly customFieldVerification?: {
+      readonly scope: 'subform-custom-fields';
+      readonly status: 'verified' | 'partial' | 'uncertain';
+      readonly matchedFields: readonly string[];
+      readonly differentFields: readonly string[];
+      readonly unobservableFields: readonly string[];
+    } })
     | { readonly acknowledgedBy: 'joomla-api'; readonly postcondition: 'not-verified'; readonly reason: string }
     | { readonly notPerformed: true; readonly reason: string }
   > {
@@ -758,7 +772,43 @@ export class JoomlaWriteService {
 
     const basePath = operation.method === 'PATCH' ? operation.path.split('/').slice(0, -1).join('/') : operation.path;
     const id = operation.method === 'PATCH' ? operation.path.split('/').at(-1) : responseId(mutation.data);
-    return id === undefined ? mutation : this.api.get(api, `${basePath}/${positiveId(Number(id))}`);
+    if (id === undefined) return mutation;
+    const response = await this.api.get(api, `${basePath}/${positiveId(Number(id))}`);
+    const target = customFieldTarget(operation.action);
+    const desired = { ...asRecord(operation.body?.['com_fields']), ...operation.body };
+    const fields = (operation.customFields ?? []).filter((field) => field.type === 'subform'
+      && field.context === target?.context && Object.hasOwn(desired, field.name));
+    const attributes = asRecord(asRecord(asRecord(response.data)['data'])['attributes']);
+    const identified = responseId(response.data) === String(positiveId(Number(id)));
+    const nativeMediaVerification = verifyNativeMedia(operation.action, operation.body ?? {}, attributes, identified, api.baseUrl);
+    const evidence = nativeMediaVerification === undefined ? response : { ...response, nativeMediaVerification };
+    if (fields.length === 0) return evidence;
+    const nested = asRecord(attributes['com_fields']);
+    const matchedFields: string[] = [];
+    const differentFields: string[] = [];
+    const unobservableFields: string[] = [];
+    for (const field of fields) {
+      if (!Object.hasOwn(desired, field.name)) continue;
+      if (!identified) {
+        unobservableFields.push(field.name);
+        continue;
+      }
+      if (!Object.hasOwn(attributes, field.name) && !Object.hasOwn(nested, field.name)) {
+        unobservableFields.push(field.name);
+        continue;
+      }
+      const observed = Object.hasOwn(attributes, field.name) ? attributes[field.name] : nested[field.name];
+      const matched = compareSubformCustomField(operation.action, fields, field.name, desired[field.name], observed);
+      if (matched === undefined) unobservableFields.push(field.name);
+      else (matched ? matchedFields : differentFields).push(field.name);
+    }
+    // Retain the raw read response. This narrow evidence makes no claim about
+    // other approved fields or the PHP component's durable execution lease.
+    return { ...evidence, customFieldVerification: {
+      scope: 'subform-custom-fields',
+      status: !identified || differentFields.length > 0 ? 'uncertain' : unobservableFields.length > 0 ? 'partial' : 'verified',
+      matchedFields, differentFields, unobservableFields,
+    } };
   }
 
   private requireConfirmation(): ConfirmationService {

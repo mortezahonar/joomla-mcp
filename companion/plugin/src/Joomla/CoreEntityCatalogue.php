@@ -31,13 +31,13 @@ final class CoreEntityCatalogue
         'id', 'asset_id', 'context', 'group_id', 'title', 'name', 'label', 'default_value',
         'type', 'note', 'description', 'state', 'required', 'only_use_in_subform', 'language',
         'created_time', 'created_user_id', 'modified_time', 'modified_by', 'access', 'ordering',
-        'params', 'fieldparams',
+        'params', 'fieldparams', 'assigned_cat_ids',
     ];
 
     private const FIELD_WRITE = [
         'group_id', 'title', 'name', 'label', 'default_value', 'type', 'note', 'description',
         'state', 'required', 'only_use_in_subform', 'language', 'access', 'ordering', 'params',
-        'fieldparams',
+        'fieldparams', 'assigned_cat_ids',
     ];
 
     private const GROUP_READ = [
@@ -114,7 +114,7 @@ final class CoreEntityCatalogue
                     'metakey', 'metadesc', 'access', 'hits', 'metadata', 'featured', 'language', 'note', 'tags',
                 ],
                 [
-                    'title', 'alias', 'introtext', 'fulltext', 'state', 'catid', 'created_by_alias',
+                    'title', 'alias', 'introtext', 'fulltext', 'state', 'catid', 'created', 'created_by', 'created_by_alias',
                     'publish_up', 'publish_down', 'images', 'urls', 'attribs', 'ordering', 'metakey',
                     'metadesc', 'access', 'metadata', 'featured', 'language', 'note', 'tags',
                 ],
@@ -215,11 +215,11 @@ final class CoreEntityCatalogue
                 'modules.site', 'site modules', 'com_modules', 'Modules', 'Module',
                 [
                     'id', 'title', 'note', 'content', 'ordering', 'position', 'checked_out', 'published',
-                    'module', 'access', 'showtitle', 'params', 'client_id', 'language', 'assigned',
+                    'module', 'access', 'showtitle', 'params', 'client_id', 'language', 'assigned', 'publish_up', 'publish_down',
                 ],
                 [
                     'title', 'note', 'content', 'ordering', 'position', 'published', 'module', 'access',
-                    'showtitle', 'params', 'language', 'assigned',
+                    'showtitle', 'params', 'language', 'assigned', 'publish_up', 'publish_down',
                 ],
                 ['client_id' => 0], ['client_id' => 0],
             ),
@@ -227,11 +227,11 @@ final class CoreEntityCatalogue
                 'modules.administrator', 'administrator modules', 'com_modules', 'Modules', 'Module',
                 [
                     'id', 'title', 'note', 'content', 'ordering', 'position', 'checked_out', 'published',
-                    'module', 'access', 'showtitle', 'params', 'client_id', 'language', 'assigned',
+                    'module', 'access', 'showtitle', 'params', 'client_id', 'language', 'assigned', 'publish_up', 'publish_down',
                 ],
                 [
                     'title', 'note', 'content', 'ordering', 'position', 'published', 'module', 'access',
-                    'showtitle', 'params', 'language', 'assigned',
+                    'showtitle', 'params', 'language', 'assigned', 'publish_up', 'publish_down',
                 ],
                 ['client_id' => 1], ['client_id' => 1], highRisk: true,
             ),

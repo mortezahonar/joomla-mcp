@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { hostname as operatingSystemHostname, platform, arch } from 'node:os';
 
 import { joomlaCrudBases } from '../catalog/crud-bases.js';
+import { compareSubformCustomField, customFieldTarget, type ResolvedCustomField } from '../application/custom-fields.js';
 import { loadConfiguration } from '../config/load.js';
 import type { SiteConfig, Toolset } from '../config/schema.js';
 import { JOOMLA_MCP_VERSION } from '../version.js';
@@ -358,10 +359,8 @@ export async function runLiveTest(
         transport: kind,
         message: 'MCP transport is ready.',
       });
-    }
-
-    for (const session of sessions) {
-      activeTransport = session.kind;
+      // Connect immediately before executing this transport's lanes: a preceding
+      // lane can take longer than the HTTP gateway's idle session lifetime.
       await withProgressOperation(
         progress,
         {
@@ -1353,6 +1352,8 @@ async function runConfiguredCrudProfile(
       listScenario,
       record,
       options,
+      'created',
+      plannedCustomFields(createResponse),
     );
     if (verified === undefined) continue;
     state.namedRecords.set(reference, verified);
@@ -1442,6 +1443,7 @@ async function runConfiguredCrudProfile(
         record,
         options,
         `updated-${safeSegment(configuredUpdate.name)}`,
+        plannedCustomFields(updated.response),
       );
       if (verifiedUpdate !== undefined) {
         current = verifiedUpdate;
@@ -1648,6 +1650,7 @@ async function verifyConfiguredResource(
   record: AttemptRecorder,
   options: LiveTestOptions,
   phasePrefix = 'created',
+  customFields: readonly ResolvedCustomField[] = [],
 ): Promise<LiveFixtureRecord | undefined> {
   let primary: LiveFixtureRecord | undefined;
   let creatingPathReadBack: LiveFixtureRecord | undefined;
@@ -1678,7 +1681,7 @@ async function verifyConfiguredResource(
         readBack = firstEntity(response);
         assertEntityId(readBack, id, getScenario.id);
         try {
-          const attributes = assertChangedFields(response, expected, baseId);
+          const attributes = assertChangedFields(response, expected, baseId, customFields);
           return {
             response,
             expected: visibleExpectation(expected),
@@ -3324,11 +3327,41 @@ export function assertChangedFields(
   response: unknown,
   changes: Readonly<Record<string, unknown>>,
   baseId: string,
+  customFields: readonly ResolvedCustomField[] = [],
 ): Readonly<Record<string, unknown>> {
   const attributes = firstEntity(response)?.attributes ?? {};
   const mismatches: string[] = [];
-  for (const [key, expected] of Object.entries(changes)) {
+  const alias = asRecord(changes['com_fields']);
+  const context = customFieldTarget(`${baseId}.update`)?.context;
+  const resolvedAlias = Object.keys(alias).length > 0 && context !== undefined
+    && Object.keys(alias).every((name) => customFields.some((field) => field.name === name && field.context === context));
+  const approved = resolvedAlias ? { ...alias, ...changes } : changes;
+  for (const [key, expected] of Object.entries(approved)) {
     if (key === 'password' || key === 'password2') continue;
+    if (key === 'com_fields' && resolvedAlias) continue;
+    const nested = asRecord(attributes['com_fields']);
+    const observed = Object.hasOwn(attributes, key) ? attributes[key] : nested[key];
+    const subform = compareSubformCustomField(`${baseId}.update`, customFields, key, expected, observed);
+    if (subform !== undefined) {
+      if ((!Object.hasOwn(attributes, key) && !Object.hasOwn(nested, key)) || !subform) mismatches.push(fieldMismatch(key, expected, observed));
+      continue;
+    }
+    if (resolvedAlias && Object.hasOwn(alias, key)) {
+      if ((!Object.hasOwn(attributes, key) && !Object.hasOwn(nested, key)) || !looselyEqual(observed, expected)) {
+        mismatches.push(fieldMismatch(key, expected, observed));
+      }
+      continue;
+    }
+    if (key === 'assigned_cat_ids' && joomlaCrudBases.some((base) => base.id === baseId && base.id.startsWith('fields.'))) {
+      const submitted = categoryMemberships(expected, true);
+      const actual = categoryMemberships(attributes[key], false);
+      const desired = [1, '1', true].includes(changes['only_use_in_subform'] as 1 | '1' | true) ? [-1] : submitted;
+      if (submitted === undefined || desired === undefined || actual === undefined
+        || desired.length !== actual.length || desired.some((id, index) => id !== actual[index])) {
+        mismatches.push(fieldMismatch(key, expected, attributes[key]));
+      }
+      continue;
+    }
     if (baseId.startsWith('fields.') && key === 'default_value') {
       // NULL and missing are not an empty string: both hide the field XML/DOM regression.
       if (!Object.hasOwn(attributes, key) || attributes[key] !== expected) {
@@ -3362,6 +3395,34 @@ export function assertChangedFields(
     );
   }
   return attributes;
+}
+
+/** Read comparison metadata only from the actual server-approved write plan. */
+function plannedCustomFields(response: unknown): readonly ResolvedCustomField[] {
+  const plan = asRecord(asRecord(response)['plan']);
+  const operation = asRecord(plan['operation']);
+  const action = operation['action'];
+  const target = typeof action === 'string' ? customFieldTarget(action) : undefined;
+  if (target === undefined) return [];
+  const metadata = operation['customFields'];
+  const fields = Array.isArray(metadata) ? metadata : asRecord(metadata)['fields'];
+  if (!Array.isArray(fields) || fields.length > 1_000) return [];
+  return fields.filter((field): field is ResolvedCustomField => isPlainRecord(field)
+    && typeof field['name'] === 'string' && typeof field['type'] === 'string' && field['context'] === target.context);
+}
+
+/** Reviewed FieldModel semantics; no coercion for arbitrary JSON fields. */
+function categoryMemberships(value: unknown, submitted: boolean): readonly number[] | undefined {
+  if (!Array.isArray(value) || value.length > 1_000) return undefined;
+  const ids = new Set<number>();
+  for (const valueId of value) {
+    const id = typeof valueId === 'string' && /^(?:-1|0|[1-9][0-9]*)$/.test(valueId) ? Number(valueId) : valueId;
+    if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < -1 || id > 2_147_483_647) return undefined;
+    ids.add(id);
+  }
+  if (ids.has(-1)) return submitted || ids.size === 1 ? [-1] : undefined;
+  ids.delete(0);
+  return [...ids].sort((left, right) => left - right);
 }
 
 function entityMatchesFields(

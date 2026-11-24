@@ -84,7 +84,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22.17.1'
           cache: npm
@@ -153,7 +153,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.verify.outputs.release_commit }}
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22.17.1'
           cache: npm
@@ -245,7 +245,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.verify.outputs.release_commit }}
-      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+      - uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: .
           format: spdx-json
@@ -437,16 +437,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ needs.verify.outputs.release_commit }}
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '22.17.1'
           registry-url: https://registry.npmjs.org
       - run: npm install --global npm@11.18.0
       - name: Install bounded npm registry visibility check
-        env:
-          NPM_REGISTRY_ATTEMPTS: '8'
-          NPM_REGISTRY_INITIAL_DELAY_SECONDS: '2'
-          NPM_REGISTRY_MAX_DELAY_SECONDS: '30'
         run: |
           helper="${RUNNER_TEMP}/npm-registry-view"
           cat > "${helper}" <<'NPM_REGISTRY_VIEW'
@@ -457,7 +453,9 @@ jobs:
           field="${2:?npm view field is required}"
           expected="${3-}"
           mode="${4:-eventual}"
-          attempts="${NPM_REGISTRY_ATTEMPTS:-8}"
+          # npm can accept publication before asynchronous processing completes.
+          # Allow ten minutes of backoff; preflight overrides this to four reads.
+          attempts="${NPM_REGISTRY_ATTEMPTS:-24}"
           delay="${NPM_REGISTRY_INITIAL_DELAY_SECONDS:-2}"
           maximum_delay="${NPM_REGISTRY_MAX_DELAY_SECONDS:-30}"
           registry="${NPM_REGISTRY_URL:-https://registry.npmjs.org}"
@@ -480,9 +478,10 @@ jobs:
             value=''
             if value="$(
               npm view "${spec}" "${field}" \
+                --fetch-retries=0 --fetch-timeout=15000 \
                 --registry="${registry}" 2>"${error_file}"
             )"; then
-              if [[ -z "${expected}" || "${value}" == "${expected}" ]]; then
+              if [[ -n "${value}" && ( -z "${expected}" || "${value}" == "${expected}" ) ]]; then
                 printf '%s\n' "${value}"
                 exit 0
               fi
@@ -522,6 +521,7 @@ jobs:
           echo \
             "npm ${spec} ${field} did not reach ${expected:-a visible value} " \
             "after ${attempts} attempts." >&2
+          echo 'npm may still be processing an accepted publication. Once visible, dispatch Release with strategy=current and exact_version blank to reconcile it.' >&2
           exit 1
           NPM_REGISTRY_VIEW
           chmod 0755 "${helper}"
@@ -590,7 +590,7 @@ jobs:
             echo "integrity=${local_integrity}"
             echo "published=${published}"
           } >> "${GITHUB_OUTPUT}"
-      - uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -811,7 +811,7 @@ jobs:
             integrity \
             >/dev/null
 
-          if ! "${RUNNER_TEMP}/npm-registry-view" \
+          if ! NPM_REGISTRY_ATTEMPTS=8 "${RUNNER_TEMP}/npm-registry-view" \
             "@joomengine/joomla-mcp@${NPM_TAG}" \
             version \
             "${RELEASE_VERSION}" \
@@ -828,7 +828,7 @@ jobs:
               --registry=https://registry.npmjs.org
           fi
 
-          "${RUNNER_TEMP}/npm-registry-view" \
+          NPM_REGISTRY_ATTEMPTS=8 "${RUNNER_TEMP}/npm-registry-view" \
             "@joomengine/joomla-mcp@${NPM_TAG}" \
             version \
             "${RELEASE_VERSION}" \
